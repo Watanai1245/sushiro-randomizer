@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}🍣 Sushiro — สุ่มเมนู{% endblock %}
+
+{% block body %}
+<div id="budgetData" data-budget="{{ budget }}" style="display:none"></div>
+
+<div class="page-wrap">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-inner">
+      <span class="header-logo">🍣</span>
+      <div class="header-info">
+        <span class="header-user">สวัสดี, {{ user_name }}</span>
+        <span class="header-step">ขั้นตอนที่ 2 / 2 · สุ่มเมนู</span>
+      </div>
+      <a href="/budget" class="header-skip">← งบประมาณ</a>
+    </div>
+    <div class="step-bar"><div class="step-fill" style="width:100%"></div></div>
+  </header>
+
+  <!-- Budget progress bar -->
+  <div id="budgetBarWrap" class="budget-bar-wrap" style="display:none">
+    <div class="budget-bar-track">
+      <div id="budgetBar" class="budget-bar-fill" style="width:0%"></div>
+    </div>
+    <span id="budgetLabel" class="budget-label"></span>
+  </div>
+
+  <main class="page-main menu-layout">
+
+    <!-- ── Left: Wheel + Filters ── -->
+    <section class="wheel-section">
+
+      <!-- Filter panel -->
+      <div class="filter-panel">
+
+        <!-- Plate colour checkboxes -->
+        <div class="filter-group-cb">
+          <div class="filter-group-title">
+            สีจาน &amp; ราคา
+            <span class="clear-link" onclick="clearGroup('plate')">ล้าง</span>
+          </div>
+          <div class="plate-cbs">
+            {% for tier in plate_tiers %}
+            <label class="plate-opt" title="{{ tier.name }} {{ tier.label }}">
+              <input type="checkbox" class="plate-cb"
+                     data-prices="{{ tier.prices | join(',') }}"
+                     data-tier="{{ tier.id }}">
+              <span class="plate-circle"
+                    style="--c:{{ tier.color }};--t:{{ tier.text }};
+                           {% if tier.id == 'white' %}--border:2px solid #BDBDBD{% else %}--border:none{% endif %}">
+                <span class="plate-check">✓</span>
+              </span>
+              <span class="plate-info">
+                <span class="plate-price-lbl">{{ tier.label }}</span>
+                <span class="plate-name-lbl">{{ tier.name }}</span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Category checkboxes -->
+        <div class="filter-group-cb">
+          <div class="filter-group-title">
+            หมวดหมู่
+            <span class="clear-link" onclick="clearGroup('cat')">ล้าง</span>
+          </div>
+          <div class="pill-cbs">
+            {% set cats = [
+              ('Nigiri',    'นิกิริ 🍣'),
+              ('Gunkan',    'กุนกัง 🍙'),
+              ('Roll',      'โรล 🌀'),
+              ('Set',       'เซต 🍱'),
+              ('Side menu', 'เมนูเสริม 🍟'),
+              ('Dessert',   'ของหวาน 🍨'),
+              ('Drinks',    'เครื่องดื่ม 🧋'),
+            ] %}
+            {% for val, label in cats %}
+            <label class="pill-opt">
+              <input type="checkbox" class="cat-cb" value="{{ val }}">
+              <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Type checkboxes -->
+        <div class="filter-group-cb">
+          <div class="filter-group-title">
+            ประเภท
+            <span class="clear-link" onclick="clearGroup('type')">ล้าง</span>
+          </div>
+          <div class="pill-cbs">
+            {% set types = [
+              ('sushi',   '🍣 ซูชิ'),
+              ('side',    '🍟 เมนูเสริม'),
+              ('dessert', '🍨 ของหวาน'),
+              ('drink',   '🧋 เครื่องดื่ม'),
+            ] %}
+            {% for val, label in types %}
+            <label class="pill-opt">
+              <input type="checkbox" class="type-cb" value="{{ val }}">
+              <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="filter-footer">
+          <span id="itemCount" class="item-count">กำลังโหลด…</span>
+          <button class="btn-clear-all" onclick="clearAllFilters()">ล้างทั้งหมด</button>
+        </div>
+
+      </div><!-- /filter-panel -->
+
+      <!-- Wheel -->
+      <div class="wheel-wrap">
+        <canvas id="menuCanvas"></canvas>
+      </div>
+
+      <!-- Spin result -->
+      <div id="resultArea" class="result-card menu-result" style="display:none">
+        <img id="resultImg" src="" alt="" class="result-img">
+        <div class="result-info">
+          <div class="result-plate">
+            <span id="plateDot"  class="plate-dot"></span>
+            <span id="plateName" class="plate-name-text"></span>
+          </div>
+          <p class="result-name"   id="resultName">—</p>
+          <p class="result-en"     id="resultNameEn"></p>
+          <p class="result-price"  id="resultPrice">—</p>
+          <p class="result-cat"    id="resultCat"></p>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="wheel-actions">
+        <button class="btn-primary btn-spin" id="spinBtn" onclick="spin()">
+          🎰 หมุนวงล้อ
+        </button>
+        <button class="btn-secondary" onclick="randomizeWheel()">
+          🔀 สุ่มรายการใหม่
+        </button>
+      </div>
+
+      <button class="btn-add" id="addBtn" onclick="addItem()" disabled>
+        + เพิ่มในรายการสั่ง
+      </button>
+
+    </section><!-- /wheel-section -->
+
+    <!-- ── Right: Order list ── -->
+    <section class="order-section">
+      <div class="order-header">
+        <h3>รายการที่สั่ง</h3>
+        <span class="total-badge" id="totalCost">฿0</span>
+      </div>
+      <div id="orderList" class="order-list">
+        <p class="empty-note">ยังไม่มีรายการ…</p>
+      </div>
+      <button class="btn-finish" onclick="openSummary()">
+        🍽️ เสร็จสิ้น · ดูสรุปมื้ออาหาร
+      </button>
+    </section>
+
+  </main>
+</div>
+
+<!-- Summary modal -->
+<div id="summaryModal" class="modal-overlay" style="display:none" onclick="closeSummary()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeSummary()">✕</button>
+    <h2 class="modal-title">🍣 สรุปมื้ออาหาร</h2>
+    <div class="sum-meta">
+      <div class="sum-meta-row"><span>ชื่อ</span><strong id="sumName">—</strong></div>
+      <div class="sum-meta-row"><span>งบประมาณ</span><strong id="sumBudget">—</strong></div>
+      <div class="sum-meta-row total-row"><span>ยอดรวม</span><strong id="sumTotal">฿0</strong></div>
+    </div>
+    <p id="sumDiff" class="sum-diff" style="display:none"></p>
+    <div id="sumItems" class="sum-items"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeSummary()">กลับไปสั่งต่อ</button>
+      <button class="btn-finish modal-finish" onclick="finishMeal()">ยืนยันเสร็จสิ้น ✓</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+{% endblock %}

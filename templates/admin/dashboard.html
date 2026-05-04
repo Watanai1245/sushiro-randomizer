@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sushiro Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: #F0F2F5;
+      color: #1A1A2E;
+      font-size: 14px;
+    }
+
+    /* ── Layout ── */
+    .admin-wrap { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 220px;
+      background: #1A237E;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      margin-bottom: 20px;
+    }
+    .sidebar-brand-icon { font-size: 28px; }
+    .sidebar-brand-name { font-size: 16px; font-weight: 800; line-height: 1.2; }
+    .sidebar-brand-sub  { font-size: 11px; opacity: 0.6; }
+
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+    .nav-icon { font-size: 16px; }
+
+    .sidebar-footer {
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+    .logout-btn {
+      display: block;
+      text-align: center;
+      padding: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+    /* ── Main content ── */
+    .main-content {
+      flex: 1;
+      padding: 28px;
+      overflow-x: hidden;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .page-title { font-size: 24px; font-weight: 800; }
+    .page-subtitle { font-size: 13px; color: #757575; margin-top: 2px; }
+    .refresh-btn {
+      background: #fff;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .refresh-btn:hover { border-color: #3949AB; color: #3949AB; }
+
+    /* ── Stat cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .stat-icon  { font-size: 24px; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: #9E9E9E; }
+    .stat-card.blue   .stat-value { color: #1E88E5; }
+    .stat-card.green  .stat-value { color: #43A047; }
+    .stat-card.red    .stat-value { color: #E53935; }
+    .stat-card.gold   .stat-value { color: #FB8C00; }
+    .stat-card.purple .stat-value { color: #8E24AA; }
+    .stat-card.teal   .stat-value { color: #00897B; }
+
+    /* ── Charts ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 1100px) { .charts-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 700px)  { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .chart-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #1A1A2E;
+    }
+    .chart-subtitle { font-size: 12px; color: #9E9E9E; font-weight: 400; }
+
+    .no-data {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 150px;
+      color: #BDBDBD;
+      font-size: 13px;
+    }
+
+    /* ── Sessions table ── */
+    .sessions-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .table-title { font-size: 15px; font-weight: 700; }
+
+    .search-input {
+      padding: 8px 14px;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 10px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 13px;
+      outline: none;
+      width: 220px;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: #3949AB; }
+
+    .sessions-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .sessions-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: #F8F9FA;
+      color: #757575;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #EEEEEE;
+    }
+    .sessions-table th:first-child { border-radius: 8px 0 0 8px; }
+    .sessions-table th:last-child  { border-radius: 0 8px 8px 0; }
+
+    .sessions-table td {
+      padding: 12px 12px;
+      border-bottom: 1px solid #F5F5F5;
+      vertical-align: middle;
+    }
+    .sessions-table tr:last-child td { border-bottom: none; }
+    .sessions-table tr:hover td { background: #FAFAFA; cursor: pointer; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-active  { background: #E8F5E9; color: #2E7D32; }
+    .badge-done    { background: #E3F2FD; color: #1565C0; }
+
+    .btn-detail {
+      background: #F5F5F5;
+      border: none;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      color: #616161;
+      transition: background 0.15s;
+    }
+    .btn-detail:hover { background: #E0E0E0; }
+
+    .sessions-table .user-name { font-weight: 700; }
+    .sessions-table .total-cell { font-weight: 700; color: #E53935; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      padding: 28px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: #F5F5F5;
+      border: none;
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .modal-close-btn:hover { background: #E0E0E0; }
+    .modal-session-title {
+      font-size: 18px; font-weight: 800;
+      margin-bottom: 16px;
+      color: #1A237E;
+    }
+    .session-meta { margin-bottom: 16px; }
+    .session-meta-row {
+      display: flex; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #F5F5F5;
+      font-size: 13px;
+    }
+    .session-meta-row span { color: #9E9E9E; }
+    .order-item-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; background: #FAFAFA;
+      border-radius: 8px; margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .item-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%; flex-shrink: 0;
+    }
+    .item-name { flex: 1; font-weight: 500; }
+    .item-price { font-weight: 700; color: #E53935; }
+    .modal-total {
+      margin-top: 12px;
+      text-align: right;
+      font-size: 16px; font-weight: 800;
+      color: #E53935;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    ::-webkit-scrollbar       { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #DDD; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="admin-wrap">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-icon">🍣</span>
+      <div>
+        <div class="sidebar-brand-name">Sushiro Admin</div>
+        <div class="sidebar-brand-sub">ระบบจัดการ</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="#overview">
+        <span class="nav-icon">📊</span> ภาพรวม
+      </a>
+      <a class="nav-item" href="#sessions">
+        <span class="nav-icon">👥</span> เซสชั่น
+      </a>
+      <a class="nav-item" href="/">
+        <span class="nav-icon">🏠</span> หน้าหลัก
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/admin/logout" class="logout-btn">🚪 ออกจากระบบ</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <div class="page-header" id="overview">
+      <div>
+        <h1 class="page-title">แดชบอร์ดภาพรวม</h1>
+        <p class="page-subtitle">ข้อมูล ณ ปัจจุบัน · Sushiro Thailand</p>
+      </div>
+      <button class="refresh-btn" onclick="location.reload()">↻ รีเฟรช</button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">{{ stats.total_sessions }}</div>
+        <div class="stat-label">เซสชั่นทั้งหมด</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-value">{{ stats.active_sessions }}</div>
+        <div class="stat-label">กำลังใช้งาน</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">{{ stats.finished_sessions }}</div>
+        <div class="stat-label">เสร็จสิ้นแล้ว</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-icon">🍣</div>
+        <div class="stat-value">{{ stats.total_orders }}</div>
+        <div class="stat-label">รายการที่สั่ง</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value">฿{{ "{:,}".format(stats.total_revenue) }}</div>
+        <div class="stat-label">รายรับรวม</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value">฿{{ stats.avg_spend }}</div>
+        <div class="stat-label">เฉลี่ยต่อเซสชั่น</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+
+      <!-- Top items bar chart -->
+      <div class="chart-card">
+        <div class="chart-title">
+          เมนูยอดนิยม
+          <span class="chart-subtitle"> · Top 15</span>
+        </div>
+        {% if top_items_json != '[]' %}
+        <canvas id="topItemsChart" style="max-height:320px"></canvas>
+        {% else %}
+        <div class="no-data">ยังไม่มีข้อมูล</div>
+        {% endif %}
+      </div>
+
+      <!-- Category doughnut -->
+      <div class="chart-card">
+        <div class="chart-title">ตามหมวดหมู่</div>
+        {% if by_category_json != '[]' %}
+        <canvas id="categoryChart" style="max-height:240px"></canvas>
+        {% else %}
+        <div class="no-data">ยังไม่มีข้อมูล</div>
+        {% endif %}
+      </div>
+
+      <!-- Plate colour doughnut -->
+      <div class="chart-card">
+        <div class="chart-title">ตามสีจาน</div>
+        {% if by_plate_json != '[]' %}
+        <canvas id="plateChart" style="max-height:240px"></canvas>
+        {% else %}
+        <div class="no-data">ยังไม่มีข้อมูล</div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Sessions table -->
+    <div class="sessions-card" id="sessions">
+      <div class="table-header">
+        <div class="table-title">เซสชั่นทั้งหมด ({{ sessions|length }})</div>
+        <input type="text" id="sessionSearch" class="search-input"
+               placeholder="🔍 ค้นหาชื่อผู้ใช้…"
+               oninput="filterSessions(this.value)">
+      </div>
+
+      {% if sessions %}
+      <table class="sessions-table" id="sessionsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ชื่อ</th>
+            <th>งบประมาณ</th>
+            <th>รายการ</th>
+            <th>ยอดรวม</th>
+            <th>สถานะ</th>
+            <th>วันที่</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr data-name="{{ s.user_name | lower }}" onclick="openSession({{ s.id }})">
+            <td style="color:#9E9E9E">{{ s.id }}</td>
+            <td class="user-name">{{ s.user_name }}</td>
+            <td>{{ '฿' ~ '{:,}'.format(s.budget) if s.budget else '—' }}</td>
+            <td>{{ s.order_count }} รายการ</td>
+            <td class="total-cell">฿{{ '{:,}'.format(s.total_spent) }}</td>
+            <td>
+              {% if s.finished_at %}
+                <span class="badge badge-done">เสร็จสิ้น</span>
+              {% else %}
+                <span class="badge badge-active">กำลังใช้</span>
+              {% endif %}
+            </td>
+            <td style="color:#9E9E9E;font-size:12px">
+              {{ s.created_at[:16] if s.created_at else '—' }}
+            </td>
+            <td onclick="event.stopPropagation()">
+              <button class="btn-detail" onclick="openSession({{ s.id }})">รายละเอียด</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="no-data" style="height:120px">ยังไม่มีเซสชั่น</div>
+      {% endif %}
+    </div>
+
+  </main>
+</div>
+
+<!-- Session detail modal -->
+<div id="sessionModal" class="modal-overlay" style="display:none" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close-btn" onclick="closeModal()">✕</button>
+    <div id="sessionDetail">กำลังโหลด…</div>
+  </div>
+</div>
+
+<script>
+// ── Charts ────────────────────────────────────────────────────────────────────
+const topItems   = {{ top_items_json | safe }};
+const byCategory = {{ by_category_json | safe }};
+const byPlate    = {{ by_plate_json | safe }};
+
+const CHART_COLORS = [
+  '#E53935','#FB8C00','#FDD835','#43A047','#00ACC1',
+  '#1E88E5','#8E24AA','#EC407A','#FF7043','#66BB6A',
+  '#29B6F6','#AB47BC','#26A69A','#EF5350','#7E57C2',
+];
+
+// Top items horizontal bar
+if (topItems.length) {
+  new Chart(document.getElementById('topItemsChart'), {
+    type: 'bar',
+    data: {
+      labels: topItems.map(d => d.item_name_th),
+      datasets: [{
+        label: 'ยอดสั่ง (ครั้ง)',
+        data: topItems.map(d => d.cnt),
+        backgroundColor: topItems.map(d => d.plate_color || '#3949AB'),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#F5F5F5' }, ticks: { font: { family: 'Sarabun', size: 12 } } },
+        y: { grid: { display: false },   ticks: { font: { family: 'Sarabun', size: 12 } } },
+      }
+    }
+  });
+}
+
+// Category doughnut
+if (byCategory.length) {
+  new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: {
+      labels: byCategory.map(d => d.category),
+      datasets: [{
+        data: byCategory.map(d => d.cnt),
+        backgroundColor: CHART_COLORS,
+        borderWidth: 2,
+        borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 }, padding: 10 } }
+      }
+    }
+  });
+}
+
+// Plate colour doughnut
+if (byPlate.length) {
+  new Chart(document.getElementById('plateChart'), {
+    type: 'doughnut',
+    data: {
+      labels: byPlate.map(d => `${d.plate_name} (฿${['30','40','60–70','80','100','120+'][['จานขาว','จานแดง','จานเงิน','จานทอง','จานดำ','พรีเมียม'].indexOf(d.plate_name)] || 0})`),
+      datasets: [{
+        data: byPlate.map(d => d.cnt),
+        backgroundColor: byPlate.map(d => d.plate_color || '#9E9E9E'),
+        borderWidth: 2,
+        borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 }, padding: 10 } }
+      }
+    }
+  });
+}
+
+// ── Table search ──────────────────────────────────────────────────────────────
+function filterSessions(q) {
+  const term = q.toLowerCase().trim();
+  document.querySelectorAll('#sessionsTable tbody tr').forEach(row => {
+    const name = row.dataset.name || '';
+    row.style.display = name.includes(term) ? '' : 'none';
+  });
+}
+
+// ── Session detail modal ──────────────────────────────────────────────────────
+async function openSession(id) {
+  document.getElementById('sessionModal').style.display = 'flex';
+  document.getElementById('sessionDetail').innerHTML = '<div style="text-align:center;padding:30px;color:#9E9E9E">กำลังโหลด…</div>';
+
+  const res  = await fetch(`/admin/api/session/${id}`);
+  const data = await res.json();
+  if (data.error) {
+    document.getElementById('sessionDetail').innerHTML = `<p style="color:red">${data.error}</p>`;
+    return;
+  }
+
+  const s   = data.session;
+  const sts = s.finished_at
+    ? '<span class="badge badge-done">เสร็จสิ้น</span>'
+    : '<span class="badge badge-active">กำลังใช้งาน</span>';
+
+  const itemsHtml = data.orders.length === 0
+    ? '<p style="color:#BDBDBD;text-align:center;padding:16px">ไม่มีรายการ</p>'
+    : data.orders.map((o, i) => `
+        <div class="order-item-row">
+          <span class="item-dot" style="background:${o.plate_color};
+            ${o.plate_color==='#F0F0F0'?'border:1.5px solid #BDBDBD':''}"></span>
+          <span style="color:#9E9E9E;font-size:11px;min-width:20px">${i+1}.</span>
+          <span class="item-name">${o.item_name_th}</span>
+          <span style="color:#9E9E9E;font-size:11px">${o.item_name_en || ''}</span>
+          <span class="item-price">฿${o.price}</span>
+        </div>`).join('');
+
+  document.getElementById('sessionDetail').innerHTML = `
+    <h2 class="modal-session-title">เซสชั่น #${s.id} — ${s.user_name}</h2>
+    <div class="session-meta">
+      <div class="session-meta-row"><span>สถานะ</span>${sts}</div>
+      <div class="session-meta-row"><span>งบประมาณ</span><strong>${s.budget ? '฿' + s.budget.toLocaleString() : 'ไม่ได้กำหนด'}</strong></div>
+      <div class="session-meta-row"><span>เริ่มต้น</span>${s.created_at || '—'}</div>
+      <div class="session-meta-row"><span>เสร็จสิ้น</span>${s.finished_at || '—'}</div>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#616161">
+      รายการที่สั่ง (${data.orders.length} รายการ)
+    </div>
+    ${itemsHtml}
+    <div class="modal-total">ยอดรวม: ฿${data.total.toLocaleString()}</div>
+  `;
+}
+
+function closeModal() {
+  document.getElementById('sessionModal').style.display = 'none';
+}
+</script>
+</body>
+</html>

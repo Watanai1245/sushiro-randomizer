@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}🍣 Sushiro — สุ่มงบประมาณ{% endblock %}
+
+{% block body %}
+<div class="page-wrap">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-inner">
+      <span class="header-logo">🍣</span>
+      <div class="header-info">
+        <span class="header-user">สวัสดี, {{ user_name }}</span>
+        <span class="header-step">ขั้นตอนที่ 1 / 2 · กำหนดงบประมาณ</span>
+      </div>
+      <a href="/menu" class="header-skip">ข้ามขั้นตอน →</a>
+    </div>
+    <div class="step-bar">
+      <div class="step-fill" style="width:50%"></div>
+    </div>
+  </header>
+
+  <main class="page-main two-col">
+
+    <!-- Left: Wheel -->
+    <section class="wheel-section">
+      <div class="wheel-wrap">
+        <canvas id="budgetCanvas"></canvas>
+      </div>
+
+      <div id="resultArea" class="result-card" style="display:none">
+        <p class="result-label">งบประมาณของคุณคือ</p>
+        <p class="result-amount" id="resultAmount">฿0</p>
+      </div>
+
+      <div class="wheel-actions">
+        <button class="btn-primary btn-spin" id="spinBtn" onclick="spin()">
+          🎰 หมุนวงล้อ
+        </button>
+        <button class="btn-secondary" onclick="randomize()">
+          🔀 สุ่มรายการใหม่
+        </button>
+      </div>
+
+      <button class="btn-confirm" id="confirmBtn" onclick="confirmBudget()" disabled>
+        ยืนยันงบประมาณ →
+      </button>
+      <a href="/menu" class="link-skip">ข้ามขั้นตอนนี้ (ไม่กำหนดงบ)</a>
+    </section>
+
+    <!-- Right: Controls -->
+    <section class="controls-section">
+      <div class="ctrl-card">
+        <h3 class="ctrl-title">ตัวเลือกงบประมาณ</h3>
+        <p class="ctrl-hint">กดปุ่ม <strong>สุ่มรายการใหม่</strong> เพื่อเปลี่ยนรายการบนวงล้อ</p>
+        <div id="chipList" class="chip-list"></div>
+      </div>
+
+      <div class="ctrl-card">
+        <h3 class="ctrl-title">เพิ่มจำนวนเอง (บาท)</h3>
+        <div class="add-row">
+          <input type="number" id="customInput" placeholder="เช่น 350" min="50" max="20000" step="50">
+          <button class="btn-secondary" onclick="addAmount()">+ เพิ่ม</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/budget.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}🍣 Sushiro สุ่มเมนู — ยินดีต้อนรับ{% endblock %}
+
+{% block body %}
+<div class="landing-wrap">
+  <div class="landing-card">
+    <div class="brand-logo">🍣</div>
+    <h1 class="brand-name">Sushiro</h1>
+    <p class="brand-sub">สุ่มเมนูอร่อย · ประหยัดเวลาเลือก</p>
+
+    <div class="name-form">
+      <label>ชื่อของคุณ</label>
+      <input type="text" id="nameInput" placeholder="กรอกชื่อเพื่อเริ่มต้น…" maxlength="40" autofocus>
+      <p id="nameErr" class="field-error" style="display:none">กรุณาใส่ชื่อก่อนนะคะ</p>
+      <button class="btn-primary btn-lg" id="startBtn" onclick="startSession()">
+        เริ่มสุ่มเมนู &rarr;
+      </button>
+    </div>
+
+    <p class="landing-note">Sushiro Thailand · สำหรับลูกค้าในประเทศไทย</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function startSession() {
+  const name = document.getElementById('nameInput').value.trim();
+  const err  = document.getElementById('nameErr');
+  if (!name) {
+    err.style.display = 'block';
+    document.getElementById('nameInput').classList.add('shake');
+    setTimeout(() => document.getElementById('nameInput').classList.remove('shake'), 400);
+    return;
+  }
+  err.style.display = 'none';
+  const btn = document.getElementById('startBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังเริ่ม…';
+
+  const res  = await fetch('/api/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    window.location.href = '/budget';
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'เริ่มสุ่มเมนู →';
+    err.textContent = data.error || 'เกิดข้อผิดพลาด';
+    err.style.display = 'block';
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('nameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startSession();
+  });
+});
+</script>
+{% endblock %}
