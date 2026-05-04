@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import csv
 import os
 import json
 from datetime import datetime, timedelta, timezone
+from functools import wraps
 
 _TZ_THAI = timezone(timedelta(hours=7))
 
@@ -11,7 +13,7 @@ def to_thai_time(ts):
     if not ts:
         return None
     try:
-        dt = datetime.strptime(str(ts), '%Y-%m-%d %H:%M:%S')
+        dt = ts if isinstance(ts, datetime) else datetime.fromisoformat(str(ts).split('.')[0])
         return dt.replace(tzinfo=timezone.utc).astimezone(_TZ_THAI).strftime('%Y-%m-%d %H:%M')
     except Exception:
         return str(ts)
@@ -19,11 +21,10 @@ def to_thai_time(ts):
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'sushiro-th-secret-2024')
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Vercel has a read-only filesystem; /tmp is the only writable location
-DATABASE = os.path.join('/tmp' if os.environ.get('VERCEL') else BASE_DIR, 'sushiro.db')
-MENU_CSV = os.path.join(BASE_DIR, 'Menu', 'sushiro_menu.csv')
-IMAGES_DIR = os.path.join(BASE_DIR, 'Menu', 'images')
+BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+MENU_CSV    = os.path.join(BASE_DIR, 'Menu', 'sushiro_menu.csv')
+IMAGES_DIR  = os.path.join(BASE_DIR, 'Menu', 'images')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'sushiro-admin')
 
 # ── Correct Sushiro Thailand plate colors ─────────────────────────────────────
@@ -57,34 +58,36 @@ _menu_cache = None
 # ── Database ──────────────────────────────────────────────────────────────────
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return psycopg2.connect(DATABASE_URL)
 
 
 def init_db():
     conn = get_db()
-    conn.executescript('''
+    cur  = conn.cursor()
+    cur.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_name TEXT NOT NULL,
-            budget INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            id          SERIAL PRIMARY KEY,
+            user_name   TEXT NOT NULL,
+            budget      INTEGER DEFAULT 0,
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             finished_at TIMESTAMP
-        );
+        )
+    ''')
+    cur.execute('''
         CREATE TABLE IF NOT EXISTS meal_orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id INTEGER NOT NULL REFERENCES sessions(id),
+            id           SERIAL PRIMARY KEY,
+            session_id   INTEGER NOT NULL REFERENCES sessions(id),
             item_name_th TEXT NOT NULL,
             item_name_en TEXT,
-            price INTEGER NOT NULL,
-            category TEXT,
-            plate_color TEXT,
-            plate_name TEXT,
-            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+            price        INTEGER NOT NULL,
+            category     TEXT,
+            plate_color  TEXT,
+            plate_name   TEXT,
+            added_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
     ''')
     conn.commit()
+    cur.close()
     conn.close()
 
 
@@ -138,8 +141,6 @@ def get_menu():
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────
 
-from functools import wraps
-
 def require_session(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -192,9 +193,11 @@ def api_start():
         return jsonify({'error': 'กรุณาใส่ชื่อ'}), 400
 
     conn = get_db()
-    cur  = conn.execute('INSERT INTO sessions (user_name) VALUES (?)', (name,))
-    sid  = cur.lastrowid
+    cur  = conn.cursor()
+    cur.execute('INSERT INTO sessions (user_name) VALUES (%s) RETURNING id', (name,))
+    sid  = cur.fetchone()[0]
     conn.commit()
+    cur.close()
     conn.close()
 
     session['session_id'] = sid
@@ -212,8 +215,10 @@ def api_set_budget():
         return jsonify({'error': 'ไม่พบ session'}), 400
 
     conn = get_db()
-    conn.execute('UPDATE sessions SET budget = ? WHERE id = ?', (budget, sid))
+    cur  = conn.cursor()
+    cur.execute('UPDATE sessions SET budget = %s WHERE id = %s', (budget, sid))
     conn.commit()
+    cur.close()
     conn.close()
 
     session['budget'] = budget
@@ -233,14 +238,16 @@ def api_add_item():
         return jsonify({'error': 'ไม่พบ session'}), 400
 
     conn = get_db()
-    conn.execute(
+    cur  = conn.cursor()
+    cur.execute(
         'INSERT INTO meal_orders (session_id,item_name_th,item_name_en,price,category,plate_color,plate_name) '
-        'VALUES (?,?,?,?,?,?,?)',
+        'VALUES (%s,%s,%s,%s,%s,%s,%s)',
         (sid, data['name_th'], data.get('name_en', ''), data['price'],
          data.get('category', ''), data.get('plate_color', ''), data.get('plate_name', ''))
     )
     conn.commit()
     total, orders = _get_orders(conn, sid)
+    cur.close()
     conn.close()
     return jsonify({'success': True, 'total': total, 'orders': orders})
 
@@ -252,9 +259,11 @@ def api_remove_item(item_id):
         return jsonify({'error': 'ไม่พบ session'}), 400
 
     conn = get_db()
-    conn.execute('DELETE FROM meal_orders WHERE id = ? AND session_id = ?', (item_id, sid))
+    cur  = conn.cursor()
+    cur.execute('DELETE FROM meal_orders WHERE id = %s AND session_id = %s', (item_id, sid))
     conn.commit()
     total, orders = _get_orders(conn, sid)
+    cur.close()
     conn.close()
     return jsonify({'success': True, 'total': total, 'orders': orders})
 
@@ -265,9 +274,12 @@ def api_summary():
     if not sid:
         return jsonify({'error': 'ไม่พบ session'}), 400
 
-    conn    = get_db()
-    sess    = conn.execute('SELECT * FROM sessions WHERE id = ?', (sid,)).fetchone()
+    conn = get_db()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM sessions WHERE id = %s', (sid,))
+    sess  = cur.fetchone()
     total, orders = _get_orders(conn, sid)
+    cur.close()
     conn.close()
 
     budget = sess['budget'] or 0
@@ -287,8 +299,10 @@ def api_finish():
         return jsonify({'error': 'ไม่พบ session'}), 400
 
     conn = get_db()
-    conn.execute('UPDATE sessions SET finished_at = CURRENT_TIMESTAMP WHERE id = ?', (sid,))
+    cur  = conn.cursor()
+    cur.execute('UPDATE sessions SET finished_at = CURRENT_TIMESTAMP WHERE id = %s', (sid,))
     conn.commit()
+    cur.close()
     conn.close()
     session.clear()
     return jsonify({'success': True})
@@ -330,46 +344,60 @@ def admin_logout():
 @require_admin
 def admin_dashboard():
     conn = get_db()
+    sc   = conn.cursor()                                          # scalar cursor
+    dc   = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # dict cursor
+
+    sc.execute('SELECT COUNT(*) FROM sessions'); total_sessions = sc.fetchone()[0]
+    sc.execute('SELECT COUNT(*) FROM sessions WHERE finished_at IS NULL'); active = sc.fetchone()[0]
+    sc.execute('SELECT COUNT(*) FROM sessions WHERE finished_at IS NOT NULL'); finished = sc.fetchone()[0]
+    sc.execute('SELECT COUNT(*) FROM meal_orders'); total_orders = sc.fetchone()[0]
+    sc.execute('SELECT COALESCE(SUM(price),0) FROM meal_orders'); total_revenue = sc.fetchone()[0]
+    sc.execute('SELECT AVG(s) FROM (SELECT SUM(price) s FROM meal_orders GROUP BY session_id) AS sub')
+    avg = sc.fetchone()[0]
 
     stats = {
-        'total_sessions':    conn.execute('SELECT COUNT(*) FROM sessions').fetchone()[0],
-        'active_sessions':   conn.execute('SELECT COUNT(*) FROM sessions WHERE finished_at IS NULL').fetchone()[0],
-        'finished_sessions': conn.execute('SELECT COUNT(*) FROM sessions WHERE finished_at IS NOT NULL').fetchone()[0],
-        'total_orders':      conn.execute('SELECT COUNT(*) FROM meal_orders').fetchone()[0],
-        'total_revenue':     conn.execute('SELECT COALESCE(SUM(price),0) FROM meal_orders').fetchone()[0],
+        'total_sessions':    total_sessions,
+        'active_sessions':   active,
+        'finished_sessions': finished,
+        'total_orders':      total_orders,
+        'total_revenue':     total_revenue,
+        'avg_spend':         round(avg or 0),
     }
-    avg = conn.execute(
-        'SELECT AVG(s) FROM (SELECT SUM(price) s FROM meal_orders GROUP BY session_id)'
-    ).fetchone()[0]
-    stats['avg_spend'] = round(avg or 0)
 
-    top_items = [dict(r) for r in conn.execute('''
+    dc.execute('''
         SELECT item_name_th, item_name_en, plate_color, plate_name,
                COUNT(*) cnt, SUM(price) revenue
         FROM meal_orders
-        GROUP BY item_name_th
+        GROUP BY item_name_th, item_name_en, plate_color, plate_name
         ORDER BY cnt DESC LIMIT 15
-    ''').fetchall()]
+    ''')
+    top_items = [dict(r) for r in dc.fetchall()]
 
-    by_category = [dict(r) for r in conn.execute('''
+    dc.execute('''
         SELECT category, COUNT(*) cnt, SUM(price) revenue
         FROM meal_orders GROUP BY category ORDER BY cnt DESC
-    ''').fetchall()]
+    ''')
+    by_category = [dict(r) for r in dc.fetchall()]
 
-    by_plate = [dict(r) for r in conn.execute('''
+    dc.execute('''
         SELECT plate_name, plate_color, COUNT(*) cnt, SUM(price) revenue
-        FROM meal_orders GROUP BY plate_name ORDER BY revenue DESC
-    ''').fetchall()]
+        FROM meal_orders GROUP BY plate_name, plate_color ORDER BY revenue DESC
+    ''')
+    by_plate = [dict(r) for r in dc.fetchall()]
 
-    sessions = [dict(r) for r in conn.execute('''
+    dc.execute('''
         SELECT s.id, s.user_name, s.budget, s.created_at, s.finished_at,
-               COUNT(m.id) order_count,
-               COALESCE(SUM(m.price),0) total_spent
+               COUNT(m.id) AS order_count,
+               COALESCE(SUM(m.price), 0) AS total_spent
         FROM sessions s
         LEFT JOIN meal_orders m ON m.session_id = s.id
-        GROUP BY s.id ORDER BY s.created_at DESC LIMIT 100
-    ''').fetchall()]
+        GROUP BY s.id
+        ORDER BY s.created_at DESC LIMIT 100
+    ''')
+    sessions = [dict(r) for r in dc.fetchall()]
 
+    sc.close()
+    dc.close()
     conn.close()
 
     for s in sessions:
@@ -388,14 +416,18 @@ def admin_dashboard():
 @app.route('/admin/api/session/<int:sid>')
 @require_admin
 def admin_session_detail(sid):
-    conn   = get_db()
-    sess   = conn.execute('SELECT * FROM sessions WHERE id = ?', (sid,)).fetchone()
-    orders = conn.execute(
-        'SELECT * FROM meal_orders WHERE session_id = ? ORDER BY added_at', (sid,)
-    ).fetchall()
+    conn = get_db()
+    dc   = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    dc.execute('SELECT * FROM sessions WHERE id = %s', (sid,))
+    sess = dc.fetchone()
+    dc.execute('SELECT * FROM meal_orders WHERE session_id = %s ORDER BY added_at', (sid,))
+    orders = dc.fetchall()
+    dc.close()
     conn.close()
+
     if not sess:
         return jsonify({'error': 'ไม่พบ session'}), 404
+
     sess_dict = dict(sess)
     sess_dict['created_at']  = to_thai_time(sess_dict['created_at'])
     sess_dict['finished_at'] = to_thai_time(sess_dict['finished_at'])
@@ -409,10 +441,10 @@ def admin_session_detail(sid):
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _get_orders(conn, sid):
-    rows   = conn.execute(
-        'SELECT * FROM meal_orders WHERE session_id = ? ORDER BY added_at', (sid,)
-    ).fetchall()
-    orders = [dict(r) for r in rows]
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM meal_orders WHERE session_id = %s ORDER BY added_at', (sid,))
+    orders = [dict(r) for r in cur.fetchall()]
+    cur.close()
     return sum(o['price'] for o in orders), orders
 
 
