@@ -1,16 +1,25 @@
-// Single-reel slot machine — pure vanilla JS, no frameworks required.
-// Public API: new SpinningWheel(containerId, {onComplete}), setItems(items), spin(), isSpinning
+// Single-reel slot machine using requestAnimationFrame + node recycling.
+// Algorithm adapted from cc-crazy-monkey (github.com/alchimya/cc-crazy-monkey):
+//   only N_NODES live DOM nodes exist; when a node scrolls off the top it is
+//   recycled to the bottom and assigned the next item — identical to reel.js's
+//   stop-recycling logic, re-expressed for CSS/DOM instead of Cocos2D.
+//
+// Public API (unchanged): new SpinningWheel(id, {onComplete}), setItems(items),
+//   spin(), isSpinning
 
-const SLOT_H      = 88;   // px — must match CSS .slot-item height
-const SLOT_REPEAT = 20;   // how many times to tile the item list in the virtual reel
-const FALLBACK    = '/static/images/sushiro-logo.svg';
+const SLOT_H   = 88;    // px per row — must match CSS .slot-item height
+const N_NODES  = 5;     // 1 buffer above + 3 visible + 1 buffer below
+const WIN_Y    = SLOT_H; // y of the centre (winning) slot = 88 px from reel top
+const FALLBACK = '/static/images/sushiro-logo.svg';
 
 class SpinningWheel {
     constructor(containerId, options = {}) {
         this.onComplete = options.onComplete || null;
         this.items      = [];
         this.isSpinning = false;
-        this._ci        = 0;  // logical center-index in the long repeated reel
+        this._raf       = null;
+        this._nodes     = [];
+        this._nextIdx   = 0;
 
         const el = document.getElementById(containerId);
         el.innerHTML = `
@@ -31,89 +40,145 @@ class SpinningWheel {
     setItems(items) {
         this.items = items;
         if (this.isSpinning) return;
-        items.length === 0 ? this._showEmpty() : this._build();
+        items.length === 0 ? this._showEmpty() : this._initNodes();
     }
 
     spin() {
-        if (this.isSpinning || this.items.length === 0) return;
+        if (this.isSpinning || !this.items.length) return;
         this.isSpinning = true;
 
-        const n        = this.items.length;
-        const winner   = Math.floor(Math.random() * n);
-        const phase    = this._ci % n;
-        const cycles   = 5 + Math.floor(Math.random() * 3);  // 5–7 full rotations
-        const shift    = ((winner - phase) + n) % n;
-        const target   = this._ci + cycles * n + shift;
-        const duration = 3000 + Math.random() * 800;         // 3.0–3.8 s
+        const n      = this.items.length;
+        const winner = Math.floor(Math.random() * n);
+        const spins  = 5 + Math.floor(Math.random() * 3); // 5–7 full rotations
 
-        this._moveTo(target, true, duration);
+        // How many item-steps from current centre to winner
+        const curIdx  = this._centerNode().itemIdx;
+        const stepsToWinner = ((winner - curIdx) + n) % n;
+        const totalPx = (spins * n + stepsToWinner) * SLOT_H;
+        const duration = 3000 + Math.random() * 700; // 3.0–3.7 s
 
-        setTimeout(() => {
-            // Silently snap to the mid-reel position for the same item —
-            // all 3 visible rows share the same (index % n), so no visual jump.
-            this._ci = Math.floor(SLOT_REPEAT / 2) * n + winner;
-            this._moveTo(this._ci, false);
-            this.isSpinning = false;
-            if (this.onComplete) this.onComplete({ item: this.items[winner], index: winner });
-        }, duration);
+        let scrolled = 0;
+        const startT = performance.now();
+
+        const tick = (now) => {
+            const t     = Math.min((now - startT) / duration, 1);
+            const eased = this._ease(t);
+            const step  = eased * totalPx - scrolled;
+            if (step > 0) this._scroll(step);
+            scrolled = eased * totalPx;
+
+            if (t < 1) {
+                this._raf = requestAnimationFrame(tick);
+            } else {
+                this._snapTo(winner);
+                this.isSpinning = false;
+                if (this.onComplete) this.onComplete({ item: this.items[winner], index: winner });
+            }
+        };
+
+        this._raf = requestAnimationFrame(tick);
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
+    // ── Private: animation ────────────────────────────────────────────────────
+
+    // Ease-in-out cubic: slow start → fast middle → slow stop (authentic slot feel)
+    _ease(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    // Shift all nodes upward by dy px; recycle any that leave the top
+    _scroll(dy) {
+        for (const nd of this._nodes) nd.y -= dy;
+
+        // Recycle nodes that scrolled past the top buffer boundary
+        let recycled = true;
+        while (recycled) {
+            recycled = false;
+            const top = this._topNode();
+            if (top.y < -SLOT_H) {
+                const bot  = this._botNode();
+                top.y      = bot.y + SLOT_H;
+                top.itemIdx = this._nextIdx;
+                this._fill(top.el, this.items[this._nextIdx]);
+                this._nextIdx = (this._nextIdx + 1) % this.items.length;
+                recycled = true;
+            }
+        }
+
+        for (const nd of this._nodes) nd.el.style.top = Math.round(nd.y) + 'px';
+    }
+
+    // Nudge all nodes so the winner sits exactly at WIN_Y (payline)
+    _snapTo(winnerIdx) {
+        const candidates = this._nodes.filter(n => n.itemIdx === winnerIdx);
+        if (!candidates.length) return;
+        const winNode = candidates.reduce((best, nd) =>
+            Math.abs(nd.y - WIN_Y) < Math.abs(best.y - WIN_Y) ? nd : best
+        );
+        const dy = winNode.y - WIN_Y;
+        for (const nd of this._nodes) {
+            nd.y -= dy;
+            nd.el.style.top = Math.round(nd.y) + 'px';
+        }
+    }
+
+    _centerNode() {
+        return this._nodes.reduce((best, nd) =>
+            Math.abs(nd.y - WIN_Y) < Math.abs(best.y - WIN_Y) ? nd : best
+        );
+    }
+    _topNode() { return this._nodes.reduce((a, b) => a.y < b.y ? a : b); }
+    _botNode() { return this._nodes.reduce((a, b) => a.y > b.y ? a : b); }
+
+    // ── Private: DOM ──────────────────────────────────────────────────────────
 
     _showEmpty() {
-        this._reel.style.transition = 'none';
-        this._reel.style.transform  = 'translateY(0)';
+        cancelAnimationFrame(this._raf);
         this._reel.innerHTML = `
-            <div class="slot-item slot-empty">
+            <div class="slot-empty">
                 <span class="slot-empty-icon">🎰</span>
                 <span class="slot-empty-text">เลือกเมนูที่ต้องการ</span>
             </div>`;
+        this._nodes = [];
     }
 
-    _build() {
-        // Tile the item list SLOT_REPEAT times to give the reel room to scroll
-        const rows = [];
-        for (let i = 0; i < SLOT_REPEAT; i++) rows.push(...this.items);
+    _initNodes() {
+        cancelAnimationFrame(this._raf);
+        this._reel.innerHTML = '';
+        this._nodes = [];
 
-        this._reel.innerHTML = rows.map(item => this._rowHTML(item)).join('');
-
-        // Start at the middle of the tiled list so spins can go either direction
-        this._ci = Math.floor(SLOT_REPEAT / 2) * this.items.length;
-        this._moveTo(this._ci, false);
+        const n = this.items.length;
+        for (let i = 0; i < N_NODES; i++) {
+            const itemIdx = i % n;
+            const y       = (i - 1) * SLOT_H; // node 0 → y=-88, node 2 → y=88 (centre)
+            const el      = document.createElement('div');
+            el.className  = 'slot-item';
+            el.style.top  = y + 'px';
+            this._fill(el, this.items[itemIdx]);
+            this._reel.appendChild(el);
+            this._nodes.push({ el, itemIdx, y });
+        }
+        this._nextIdx = N_NODES % n;
     }
 
-    _rowHTML(item) {
-        const isObj    = item.value !== null && typeof item.value === 'object';
-        const imgSrc   = (isObj && item.value.image_url) || FALLBACK;
-        const brd      = item.color === '#F0F0F0' ? 'border:1.5px solid #BDBDBD;' : '';
-        const pricePart = isObj && item.value.price != null
+    // Write item content into a .slot-item element
+    _fill(el, item) {
+        const isObj = item.value !== null && typeof item.value === 'object';
+        const src   = (isObj && item.value.image_url) || FALLBACK;
+        const brd   = item.color === '#F0F0F0' ? 'border:1.5px solid #BDBDBD;' : '';
+        const meta  = isObj && item.value.price != null
             ? `<div class="slot-meta">
                    <span class="plate-dot-sm" style="background:${item.color};${brd}"></span>
                    <span class="slot-price">฿${item.value.price}</span>
-               </div>`
-            : '';
-
-        return `
-            <div class="slot-item">
-                <div class="slot-img-box">
-                    <img src="${imgSrc}" class="slot-img" loading="lazy" alt=""
-                         onerror="this.onerror=null;this.src='${FALLBACK}'">
-                </div>
-                <div class="slot-info">
-                    <div class="slot-name">${item.label}</div>
-                    ${pricePart}
-                </div>
+               </div>` : '';
+        el.innerHTML = `
+            <div class="slot-img-box">
+                <img src="${src}" class="slot-img" loading="lazy" alt=""
+                     onerror="this.onerror=null;this.src='${FALLBACK}'">
+            </div>
+            <div class="slot-info">
+                <div class="slot-name">${item.label}</div>
+                ${meta}
             </div>`;
-    }
-
-    // Translate the reel so the item at logical index ci sits in the center row.
-    // Center row starts at px offset 88 from the top of the 264 px window.
-    _moveTo(ci, animate, duration = 3000) {
-        const offset = Math.max(0, (ci - 1) * SLOT_H);
-        this._reel.style.transition = animate
-            ? `transform ${duration}ms cubic-bezier(0.05, 0.9, 0.1, 1.0)`
-            : 'none';
-        if (!animate) void this._reel.offsetHeight;  // flush layout so 'none' sticks
-        this._reel.style.transform = `translateY(-${offset}px)`;
     }
 }
