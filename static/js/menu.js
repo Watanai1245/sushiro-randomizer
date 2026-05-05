@@ -77,14 +77,15 @@ function renderGrid() {
 
     const brdFor = color => color === '#F0F0F0' ? 'border:1px solid #BDBDBD' : '';
 
+    const LOGO = '/static/images/sushiro-logo.svg';
     grid.innerHTML = items.map(item => {
-        const sel = selectedIds.has(item.id);
+        const sel    = selectedIds.has(item.id);
+        const imgSrc = item.image_url || LOGO;
         return `
         <div class="item-card${sel ? ' selected' : ''}" data-id="${item.id}" onclick="toggleItem(${item.id})">
           <div class="item-card-img-wrap">
-            <span class="img-fallback">🍣</span>
-            <img src="${item.image_url}" class="item-card-img" loading="lazy" alt=""
-                 onerror="this.style.opacity='0'">
+            <img src="${imgSrc}" class="item-card-img" loading="lazy" alt=""
+                 onerror="this.onerror=null;this.src='${LOGO}'">
           </div>
           <div class="item-card-body">
             <div class="item-card-name">${item.name_th}</div>
@@ -186,13 +187,9 @@ function showResult(item) {
     const area = document.getElementById('resultArea');
     const img  = document.getElementById('resultImg');
 
-    if (item.image_url) {
-        img.src           = item.image_url;
-        img.style.display = 'block';
-        img.onerror       = () => { img.style.display = 'none'; };
-    } else {
-        img.style.display = 'none';
-    }
+    img.src           = item.image_url || '/static/images/sushiro-logo.svg';
+    img.style.display = 'block';
+    img.onerror       = () => { img.src = '/static/images/sushiro-logo.svg'; img.onerror = null; };
 
     document.getElementById('resultName').textContent   = item.name_th;
     document.getElementById('resultNameEn').textContent = item.name_en;
