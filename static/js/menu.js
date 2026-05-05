@@ -20,11 +20,13 @@ async function init() {
     updateWheel();
     await refreshOrderList();
 
+    // Search
     document.getElementById('searchBox').addEventListener('input', e => {
         searchQuery = e.target.value.toLowerCase().trim();
         renderGrid();
     });
 
+    // Category tabs
     document.getElementById('catTabs').addEventListener('click', e => {
         const btn = e.target.closest('.cat-tab');
         if (!btn) return;
@@ -33,19 +35,36 @@ async function init() {
         currentCat = btn.dataset.cat;
         renderGrid();
     });
+
+    // Plate colour filter
+    document.querySelectorAll('.plate-cb').forEach(cb => {
+        cb.addEventListener('change', renderGrid);
+    });
+}
+
+// ── Filtering ─────────────────────────────────────────────────────────────────
+
+function checkedPlatePrices() {
+    const prices = [];
+    document.querySelectorAll('.plate-cb:checked').forEach(cb => {
+        cb.dataset.prices.split(',').map(Number).forEach(p => prices.push(p));
+    });
+    return prices;
+}
+
+function visibleItems() {
+    const platePrices = checkedPlatePrices();
+    return allMenuItems.filter(item => {
+        const catOk   = !currentCat || item.category === currentCat;
+        const srchOk  = !searchQuery ||
+            item.name_th.includes(searchQuery) ||
+            item.name_en.toLowerCase().includes(searchQuery);
+        const plateOk = platePrices.length === 0 || platePrices.includes(item.price);
+        return catOk && srchOk && plateOk;
+    });
 }
 
 // ── Grid rendering ────────────────────────────────────────────────────────────
-
-function visibleItems() {
-    return allMenuItems.filter(item => {
-        const catOk    = !currentCat || item.category === currentCat;
-        const searchOk = !searchQuery ||
-            item.name_th.includes(searchQuery) ||
-            item.name_en.toLowerCase().includes(searchQuery);
-        return catOk && searchOk;
-    });
-}
 
 function renderGrid() {
     const items = visibleItems();
@@ -56,19 +75,21 @@ function renderGrid() {
         return;
     }
 
+    const brdFor = color => color === '#F0F0F0' ? 'border:1px solid #BDBDBD' : '';
+
     grid.innerHTML = items.map(item => {
-        const sel    = selectedIds.has(item.id);
-        const border = item.plate_color === '#F0F0F0' ? 'border:1px solid #BDBDBD' : '';
+        const sel = selectedIds.has(item.id);
         return `
         <div class="item-card${sel ? ' selected' : ''}" data-id="${item.id}" onclick="toggleItem(${item.id})">
           <div class="item-card-img-wrap">
+            <span class="img-fallback">🍣</span>
             <img src="${item.image_url}" class="item-card-img" loading="lazy" alt=""
-                 onerror="this.parentElement.innerHTML='<div class=\'img-placeholder\'>🍣</div>'">
+                 onerror="this.style.opacity='0'">
           </div>
           <div class="item-card-body">
             <div class="item-card-name">${item.name_th}</div>
             <div class="item-card-meta">
-              <span class="plate-dot-sm" style="background:${item.plate_color};${border}"></span>
+              <span class="plate-dot-sm" style="background:${item.plate_color};${brdFor(item.plate_color)}"></span>
               <span class="item-card-price">฿${item.price}</span>
             </div>
           </div>
@@ -80,16 +101,14 @@ function renderGrid() {
 // ── Selection ─────────────────────────────────────────────────────────────────
 
 function toggleItem(id) {
-    if (selectedIds.has(id)) {
-        selectedIds.delete(id);
-    } else {
-        selectedIds.add(id);
-    }
+    selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id);
+
     const card  = document.querySelector(`.item-card[data-id="${id}"]`);
     const check = card && card.querySelector('.item-check');
     if (card && check) {
-        card.classList.toggle('selected', selectedIds.has(id));
-        check.classList.toggle('checked', selectedIds.has(id));
+        const on = selectedIds.has(id);
+        card.classList.toggle('selected', on);
+        check.classList.toggle('checked', on);
     }
     updateWheel();
 }
@@ -106,11 +125,14 @@ function clearSelection() {
     updateWheel();
 }
 
+function clearPlates() {
+    document.querySelectorAll('.plate-cb').forEach(cb => { cb.checked = false; });
+    renderGrid();
+}
+
 function quickRandom(n = 10) {
     selectedIds.clear();
-    [...allMenuItems]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, n)
+    [...allMenuItems].sort(() => Math.random() - 0.5).slice(0, n)
         .forEach(item => selectedIds.add(item.id));
     renderGrid();
     updateWheel();
@@ -128,7 +150,7 @@ function updateWheel() {
     })));
     hideResult();
     lastWinner = null;
-    document.getElementById('addBtn').disabled = true;
+    document.getElementById('addBtn').disabled  = true;
     document.getElementById('spinBtn').disabled = items.length === 0;
 
     const n = selectedIds.size;
@@ -153,8 +175,8 @@ function spin() {
 function onSpinDone(winner) {
     lastWinner = winner.item.value;
     showResult(lastWinner);
-    document.getElementById('addBtn').disabled  = false;
-    document.getElementById('spinBtn').disabled = false;
+    document.getElementById('addBtn').disabled   = false;
+    document.getElementById('spinBtn').disabled  = false;
     document.getElementById('spinBtn').innerHTML = '🎯 หมุนอีกครั้ง';
 }
 
@@ -183,6 +205,11 @@ function showResult(item) {
     area.classList.remove('pop');
     void area.offsetWidth;
     area.classList.add('pop');
+
+    // Scroll result into view on mobile
+    if (window.innerWidth <= 860) {
+        area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
 function hideResult() {

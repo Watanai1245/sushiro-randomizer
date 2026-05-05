@@ -1,8 +1,10 @@
 {
   "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" }
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "Menu/images/**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/menu-image/(.*)", "dest": "/Menu/images/$1" },
     { "src": "/(.*)", "dest": "api/index.py" }
   ]
 }

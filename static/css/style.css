@@ -1048,6 +1048,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.img-fallback {
+  position: absolute;
+  font-size: 22px;
+  line-height: 1;
+  z-index: 0;
 }
 
 .item-card-img {
@@ -1055,6 +1063,8 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .img-placeholder {
@@ -1151,3 +1161,191 @@ body {
 
 .result-info-v .result-name  { font-size: 20px; }
 .result-info-v .result-price { font-size: 26px; }
+
+/* ── Plate filter inside picker ──────────────────────────────────── */
+.picker-plates {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 2px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.picker-plates-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Slot machine ─────────────────────────────────────────────────── */
+.slot-machine {
+  width: 100%;
+  max-width: 400px;
+}
+
+.slot-window {
+  position: relative;
+  height: 264px; /* 3 × 88px */
+  overflow: hidden;
+  background: #1A1A2E;
+  border-radius: 16px;
+  border: 3px solid #E53935;
+  box-shadow: 0 0 0 1px #B71C1C, 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.slot-reel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.slot-item {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.slot-img-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #2A2A3E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.slot-img-fallback {
+  position: absolute;
+  font-size: 28px;
+  line-height: 1;
+  z-index: 0;
+}
+
+.slot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.slot-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slot-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slot-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFD54F;
+}
+
+/* Gradient overlays top/bottom */
+.slot-fade-top,
+.slot-fade-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 72px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.slot-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, #1A1A2E 0%, transparent 100%);
+}
+
+.slot-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, #1A1A2E 0%, transparent 100%);
+}
+
+/* Center highlight / selector */
+.slot-selector {
+  position: absolute;
+  top: 88px;
+  left: 0;
+  right: 0;
+  height: 88px;
+  pointer-events: none;
+  z-index: 3;
+  border-top: 2px solid rgba(229,57,53,0.7);
+  border-bottom: 2px solid rgba(229,57,53,0.7);
+  background: rgba(255,255,255,0.04);
+}
+
+/* Empty state */
+.slot-empty {
+  height: 264px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.slot-empty-icon {
+  font-size: 42px;
+  opacity: 0.5;
+}
+
+.slot-empty-text {
+  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+  font-family: 'Sarabun', sans-serif;
+}
+
+/* ── Mobile layout ───────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .page-main { padding: 12px; gap: 12px; }
+
+  .wheel-section  { order: 1; width: 100%; }
+  .picker-section { order: 2; max-height: 50vh; position: static; }
+  .order-section  { order: 3; max-height: none; position: static; }
+
+  .slot-machine   { max-width: 100%; }
+  .slot-window    { height: 264px; }
+
+  .result-card-v  { max-width: 100%; }
+
+  .wheel-actions  { max-width: 100%; }
+  .btn-add        { max-width: 100%; }
+
+  .modal-card     { padding: 20px 16px; }
+  .modal-actions  { flex-direction: column; }
+}
