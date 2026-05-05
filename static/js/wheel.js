@@ -1,15 +1,12 @@
-// Single-reel slot machine using requestAnimationFrame + node recycling.
-// Algorithm adapted from cc-crazy-monkey (github.com/alchimya/cc-crazy-monkey):
-//   only N_NODES live DOM nodes exist; when a node scrolls off the top it is
-//   recycled to the bottom and assigned the next item — identical to reel.js's
-//   stop-recycling logic, re-expressed for CSS/DOM instead of Cocos2D.
-//
-// Public API (unchanged): new SpinningWheel(id, {onComplete}), setItems(items),
-//   spin(), isSpinning
+// Single-reel slot machine — translateY strip approach.
+// Builds REPEATS copies of all items into the DOM once; animates by sliding
+// the whole strip with transform:translateY. No per-frame DOM changes.
+// After each spin the reel teleports (invisibly) back to repeat-1 so the
+// same strip can be used for the next spin indefinitely.
 
-const SLOT_H   = 88;    // px per row — must match CSS .slot-item height
-const N_NODES  = 5;     // 1 buffer above + 3 visible + 1 buffer below
-const WIN_Y    = SLOT_H; // y of the centre (winning) slot = 88 px from reel top
+const SLOT_H   = 88;    // px — must match CSS .slot-item height
+const REPEATS  = 8;     // strips built upfront; 8 × n items total
+const WIN_Y    = SLOT_H; // top of the centre (winning) slot = 88 px from window top
 const FALLBACK = '/static/images/sushiro-logo.svg';
 
 class SpinningWheel {
@@ -18,8 +15,7 @@ class SpinningWheel {
         this.items      = [];
         this.isSpinning = false;
         this._raf       = null;
-        this._nodes     = [];
-        this._nextIdx   = 0;
+        this._offset    = 0;   // current scroll amount (reel moves up by this many px)
 
         const el = document.getElementById(containerId);
         el.innerHTML = `
@@ -40,37 +36,40 @@ class SpinningWheel {
     setItems(items) {
         this.items = items;
         if (this.isSpinning) return;
-        items.length === 0 ? this._showEmpty() : this._initNodes();
+        items.length === 0 ? this._showEmpty() : this._build();
     }
 
     spin() {
         if (this.isSpinning || !this.items.length) return;
         this.isSpinning = true;
+        cancelAnimationFrame(this._raf);
 
-        const n      = this.items.length;
-        const winner = Math.floor(Math.random() * n);
-        const spins  = 5 + Math.floor(Math.random() * 3); // 5–7 full rotations
+        const n           = this.items.length;
+        const winner      = Math.floor(Math.random() * n);
+        const extraLoops  = 3 + Math.floor(Math.random() * 3); // 3–5 full rotations
 
-        // How many item-steps from current centre to winner
-        const curIdx  = this._centerNode().itemIdx;
-        const stepsToWinner = ((winner - curIdx) + n) % n;
-        const totalPx = (spins * n + stepsToWinner) * SLOT_H;
+        // Target offset so winner item lands at WIN_Y in repeat (extraLoops+1)
+        // Formula: offset = (repeat * n + winnerIdx) * SLOT_H - WIN_Y
+        const targetOffset = (extraLoops + 1) * n * SLOT_H + winner * SLOT_H - WIN_Y;
+        const startOffset  = this._offset;
+
         const duration = 3000 + Math.random() * 700; // 3.0–3.7 s
-
-        let scrolled = 0;
-        const startT = performance.now();
+        const startT   = performance.now();
 
         const tick = (now) => {
-            const t     = Math.min((now - startT) / duration, 1);
-            const eased = this._ease(t);
-            const step  = eased * totalPx - scrolled;
-            if (step > 0) this._scroll(step);
-            scrolled = eased * totalPx;
+            const t      = Math.min((now - startT) / duration, 1);
+            const eased  = this._ease(t);
+            const offset = startOffset + eased * (targetOffset - startOffset);
+            this._reel.style.transform = `translateY(${-offset}px)`;
 
             if (t < 1) {
                 this._raf = requestAnimationFrame(tick);
             } else {
-                this._snapTo(winner);
+                // Teleport to repeat-1 equivalent (same visual, resets counter for next spin)
+                const resetOffset = n * SLOT_H + winner * SLOT_H - WIN_Y;
+                this._offset = resetOffset;
+                this._reel.style.transform = `translateY(${-resetOffset}px)`;
+
                 this.isSpinning = false;
                 if (this.onComplete) this.onComplete({ item: this.items[winner], index: winner });
             }
@@ -81,104 +80,66 @@ class SpinningWheel {
 
     // ── Private: animation ────────────────────────────────────────────────────
 
-    // Ease-in-out cubic: slow start → fast middle → slow stop (authentic slot feel)
+    // Ease-in-out cubic: slow start → fast middle → slow stop
     _ease(t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
-
-    // Shift all nodes upward by dy px; recycle any that leave the top
-    _scroll(dy) {
-        for (const nd of this._nodes) nd.y -= dy;
-
-        // Recycle nodes that scrolled past the top buffer boundary
-        let recycled = true;
-        while (recycled) {
-            recycled = false;
-            const top = this._topNode();
-            if (top.y < -SLOT_H) {
-                const bot  = this._botNode();
-                top.y      = bot.y + SLOT_H;
-                top.itemIdx = this._nextIdx;
-                this._fill(top.el, this.items[this._nextIdx]);
-                this._nextIdx = (this._nextIdx + 1) % this.items.length;
-                recycled = true;
-            }
-        }
-
-        for (const nd of this._nodes) nd.el.style.top = Math.round(nd.y) + 'px';
-    }
-
-    // Nudge all nodes so the winner sits exactly at WIN_Y (payline)
-    _snapTo(winnerIdx) {
-        const candidates = this._nodes.filter(n => n.itemIdx === winnerIdx);
-        if (!candidates.length) return;
-        const winNode = candidates.reduce((best, nd) =>
-            Math.abs(nd.y - WIN_Y) < Math.abs(best.y - WIN_Y) ? nd : best
-        );
-        const dy = winNode.y - WIN_Y;
-        for (const nd of this._nodes) {
-            nd.y -= dy;
-            nd.el.style.top = Math.round(nd.y) + 'px';
-        }
-    }
-
-    _centerNode() {
-        return this._nodes.reduce((best, nd) =>
-            Math.abs(nd.y - WIN_Y) < Math.abs(best.y - WIN_Y) ? nd : best
-        );
-    }
-    _topNode() { return this._nodes.reduce((a, b) => a.y < b.y ? a : b); }
-    _botNode() { return this._nodes.reduce((a, b) => a.y > b.y ? a : b); }
 
     // ── Private: DOM ──────────────────────────────────────────────────────────
 
     _showEmpty() {
         cancelAnimationFrame(this._raf);
+        this._reel.style.transform = '';
+        this._offset = 0;
         this._reel.innerHTML = `
             <div class="slot-empty">
                 <span class="slot-empty-icon">🎰</span>
                 <span class="slot-empty-text">เลือกเมนูที่ต้องการ</span>
             </div>`;
-        this._nodes = [];
     }
 
-    _initNodes() {
+    _build() {
         cancelAnimationFrame(this._raf);
-        this._reel.innerHTML = '';
-        this._nodes = [];
-
-        const n = this.items.length;
-        for (let i = 0; i < N_NODES; i++) {
-            const itemIdx = i % n;
-            const y       = (i - 1) * SLOT_H; // node 0 → y=-88, node 2 → y=88 (centre)
-            const el      = document.createElement('div');
-            el.className  = 'slot-item';
-            el.style.top  = y + 'px';
-            this._fill(el, this.items[itemIdx]);
-            this._reel.appendChild(el);
-            this._nodes.push({ el, itemIdx, y });
+        const n    = this.items.length;
+        const html = [];
+        for (let rep = 0; rep < REPEATS; rep++) {
+            for (const item of this.items) html.push(this._itemHtml(item));
         }
-        this._nextIdx = N_NODES % n;
+        this._reel.innerHTML = html.join('');
+
+        // Start position: item 0 of repeat 1 at WIN_Y (so repeat 0 fills the slot above)
+        this._offset = n * SLOT_H - WIN_Y;
+        this._reel.style.transform = `translateY(${-this._offset}px)`;
     }
 
-    // Write item content into a .slot-item element
-    _fill(el, item) {
+    _itemHtml(item) {
         const isObj = item.value !== null && typeof item.value === 'object';
-        const src   = (isObj && item.value.image_url) || FALLBACK;
-        const brd   = item.color === '#F0F0F0' ? 'border:1.5px solid #BDBDBD;' : '';
-        const meta  = isObj && item.value.price != null
+
+        // Simple (budget) items: no image — show coloured tile with large amount text
+        if (!isObj) {
+            const tc = item.textColor || '#fff';
+            return `<div class="slot-item slot-item-simple" style="background:${item.color}">
+                <div class="slot-name slot-name-simple" style="color:${tc}">${item.label}</div>
+            </div>`;
+        }
+
+        // Menu items: thumbnail + name + price
+        const src = item.value.image_url || FALLBACK;
+        const brd = item.color === '#F0F0F0' ? 'border:1.5px solid #BDBDBD;' : '';
+        const meta = item.value.price != null
             ? `<div class="slot-meta">
                    <span class="plate-dot-sm" style="background:${item.color};${brd}"></span>
                    <span class="slot-price">฿${item.value.price}</span>
                </div>` : '';
-        el.innerHTML = `
+        return `<div class="slot-item">
             <div class="slot-img-box">
-                <img src="${src}" class="slot-img" loading="lazy" alt=""
+                <img src="${src}" class="slot-img" loading="eager" alt=""
                      onerror="this.onerror=null;this.src='${FALLBACK}'">
             </div>
             <div class="slot-info">
                 <div class="slot-name">${item.label}</div>
                 ${meta}
-            </div>`;
+            </div>
+        </div>`;
     }
 }
