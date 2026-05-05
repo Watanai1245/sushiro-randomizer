@@ -17,6 +17,10 @@ class SlotMachineComponent extends React.Component {
         this._spinning = false;
     }
 
+    componentDidMount() {
+        if (this.props.onMount) this.props.onMount();
+    }
+
     /* Called externally via ref ------------------------------------------- */
     setItems(items) {
         if (items.length === 0) {
@@ -69,8 +73,10 @@ class SlotMachineComponent extends React.Component {
     }
 
     _itemRow(item, idx) {
-        const h       = React.createElement;
-        const imgUrl  = (item.value && item.value.image_url) || FALLBACK;
+        const h        = React.createElement;
+        const isObj    = item.value !== null && typeof item.value === 'object';
+        const imgUrl   = (isObj && item.value.image_url) || FALLBACK;
+        const priceStr = isObj && item.value.price != null ? `฿${item.value.price}` : null;
         const brdStyle = item.color === '#F0F0F0'
             ? { border: '1.5px solid #BDBDBD' } : {};
 
@@ -91,14 +97,13 @@ class SlotMachineComponent extends React.Component {
             ),
             h('div', { className: 'slot-info' },
                 h('div', { className: 'slot-name' }, item.label),
-                h('div', { className: 'slot-meta' },
+                priceStr ? h('div', { className: 'slot-meta' },
                     h('span', {
                         className: 'plate-dot-sm',
                         style: Object.assign({ background: item.color }, brdStyle)
                     }),
-                    h('span', { className: 'slot-price' },
-                        '฿' + (item.value ? item.value.price : ''))
-                )
+                    h('span', { className: 'slot-price' }, priceStr)
+                ) : null
             )
         );
     }
@@ -131,9 +136,10 @@ class SlotMachineComponent extends React.Component {
 
 class SpinningWheel {
     constructor(containerId, options = {}) {
-        this.isSpinning  = false;
-        this._compRef    = React.createRef();
-        this._onComplete = options.onComplete || null;
+        this.isSpinning    = false;
+        this._compRef      = React.createRef();
+        this._onComplete   = options.onComplete || null;
+        this._pendingItems = null; // buffer if setItems called before mount
 
         const container = document.getElementById(containerId);
         const root      = ReactDOM.createRoot(container);
@@ -143,6 +149,12 @@ class SpinningWheel {
                 onComplete: (winner) => {
                     this.isSpinning = false;
                     if (this._onComplete) this._onComplete(winner);
+                },
+                onMount: () => {
+                    if (this._pendingItems !== null) {
+                        this._compRef.current.setItems(this._pendingItems);
+                        this._pendingItems = null;
+                    }
                 }
             })
         );
@@ -150,7 +162,11 @@ class SpinningWheel {
 
     setItems(items) {
         const c = this._compRef.current;
-        if (c) c.setItems(items);
+        if (c) {
+            c.setItems(items);
+        } else {
+            this._pendingItems = items; // apply once component mounts
+        }
     }
 
     spin() {
