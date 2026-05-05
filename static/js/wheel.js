@@ -74,7 +74,7 @@ class SpinningWheel {
             ctx.font = '16px Sarabun, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('เลือกหมวดหมู่เพื่อเริ่ม', cx, cy);
+            ctx.fillText('เลือกเมนูที่ต้องการ', cx, cy);
             ctx.restore();
             this._drawPointer(cx, cy, r);
             return;

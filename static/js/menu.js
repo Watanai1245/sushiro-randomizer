@@ -1,106 +1,151 @@
 let menuWheel    = null;
-let allMenuItems = [];   // full 124-item list loaded once
-let filteredItems = [];
-let wheelItems   = [];
+let allMenuItems = [];
+let selectedIds  = new Set();
 let lastWinner   = null;
 let budget       = 0;
+let currentCat   = '';
+let searchQuery  = '';
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
     budget = parseInt(document.getElementById('budgetData').dataset.budget) || 0;
 
-    menuWheel = new SpinningWheel('menuCanvas', {
-        onComplete: onSpinDone,
-    });
+    menuWheel = new SpinningWheel('menuCanvas', { onComplete: onSpinDone });
 
-    // Load all items once; filter client-side
-    const res     = await fetch('/api/menu-items');
-    allMenuItems  = await res.json();
+    const res    = await fetch('/api/menu-items');
+    allMenuItems = await res.json();
 
-    // Attach filter listeners
-    document.querySelectorAll('.plate-cb, .cat-cb, .type-cb').forEach(el => {
-        el.addEventListener('change', applyFilters);
-    });
-
-    applyFilters();          // show all items initially
+    renderGrid();
+    updateWheel();
     await refreshOrderList();
-}
 
-// ── Checkbox filter helpers ───────────────────────────────────────────────────
-
-function getCheckedValues(cls) {
-    return [...document.querySelectorAll(`.${cls}:checked`)].map(el => el.value);
-}
-
-function getCheckedPrices() {
-    const prices = [];
-    document.querySelectorAll('.plate-cb:checked').forEach(el => {
-        el.dataset.prices.split(',').map(Number).forEach(p => prices.push(p));
-    });
-    return prices;
-}
-
-function clearGroup(group) {
-    const clsMap = { plate: '.plate-cb', cat: '.cat-cb', type: '.type-cb' };
-    document.querySelectorAll(clsMap[group]).forEach(el => el.checked = false);
-    applyFilters();
-}
-
-function clearAllFilters() {
-    document.querySelectorAll('.plate-cb, .cat-cb, .type-cb').forEach(el => el.checked = false);
-    applyFilters();
-}
-
-// ── Filter & wheel population ─────────────────────────────────────────────────
-
-function applyFilters() {
-    const prices = getCheckedPrices();
-    const cats   = getCheckedValues('cat-cb');
-    const types  = getCheckedValues('type-cb');
-
-    filteredItems = allMenuItems.filter(item => {
-        const priceOk = prices.length === 0 || prices.includes(item.price);
-        const catOk   = cats.length   === 0 || cats.includes(item.category);
-        const typeOk  = types.length  === 0 || types.includes(item.item_type);
-        return priceOk && catOk && typeOk;
+    document.getElementById('searchBox').addEventListener('input', e => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderGrid();
     });
 
-    document.getElementById('itemCount').textContent =
-        filteredItems.length > 0
-            ? `พบ ${filteredItems.length} รายการ`
-            : 'ไม่พบรายการที่ตรงเงื่อนไข';
-
-    randomizeWheel();
+    document.getElementById('catTabs').addEventListener('click', e => {
+        const btn = e.target.closest('.cat-tab');
+        if (!btn) return;
+        document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCat = btn.dataset.cat;
+        renderGrid();
+    });
 }
 
-function randomizeWheel() {
-    const shuffled = [...filteredItems].sort(() => Math.random() - 0.5);
+// ── Grid rendering ────────────────────────────────────────────────────────────
 
-    wheelItems = shuffled.map(item => ({
+function visibleItems() {
+    return allMenuItems.filter(item => {
+        const catOk    = !currentCat || item.category === currentCat;
+        const searchOk = !searchQuery ||
+            item.name_th.includes(searchQuery) ||
+            item.name_en.toLowerCase().includes(searchQuery);
+        return catOk && searchOk;
+    });
+}
+
+function renderGrid() {
+    const items = visibleItems();
+    const grid  = document.getElementById('itemGrid');
+
+    if (items.length === 0) {
+        grid.innerHTML = '<p class="empty-note" style="padding:24px">ไม่พบเมนูที่ตรงกัน</p>';
+        return;
+    }
+
+    grid.innerHTML = items.map(item => {
+        const sel    = selectedIds.has(item.id);
+        const border = item.plate_color === '#F0F0F0' ? 'border:1px solid #BDBDBD' : '';
+        return `
+        <div class="item-card${sel ? ' selected' : ''}" data-id="${item.id}" onclick="toggleItem(${item.id})">
+          <div class="item-card-img-wrap">
+            <img src="${item.image_url}" class="item-card-img" loading="lazy" alt=""
+                 onerror="this.parentElement.innerHTML='<div class=\'img-placeholder\'>🍣</div>'">
+          </div>
+          <div class="item-card-body">
+            <div class="item-card-name">${item.name_th}</div>
+            <div class="item-card-meta">
+              <span class="plate-dot-sm" style="background:${item.plate_color};${border}"></span>
+              <span class="item-card-price">฿${item.price}</span>
+            </div>
+          </div>
+          <div class="item-check${sel ? ' checked' : ''}">✓</div>
+        </div>`;
+    }).join('');
+}
+
+// ── Selection ─────────────────────────────────────────────────────────────────
+
+function toggleItem(id) {
+    if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+    } else {
+        selectedIds.add(id);
+    }
+    const card  = document.querySelector(`.item-card[data-id="${id}"]`);
+    const check = card && card.querySelector('.item-check');
+    if (card && check) {
+        card.classList.toggle('selected', selectedIds.has(id));
+        check.classList.toggle('checked', selectedIds.has(id));
+    }
+    updateWheel();
+}
+
+function selectVisible() {
+    visibleItems().forEach(item => selectedIds.add(item.id));
+    renderGrid();
+    updateWheel();
+}
+
+function clearSelection() {
+    selectedIds.clear();
+    renderGrid();
+    updateWheel();
+}
+
+function quickRandom(n = 10) {
+    selectedIds.clear();
+    [...allMenuItems]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, n)
+        .forEach(item => selectedIds.add(item.id));
+    renderGrid();
+    updateWheel();
+}
+
+// ── Wheel ─────────────────────────────────────────────────────────────────────
+
+function updateWheel() {
+    const items = allMenuItems.filter(item => selectedIds.has(item.id));
+    menuWheel.setItems(items.map(item => ({
         label:     item.name_th,
         value:     item,
         color:     item.plate_color,
         textColor: item.text_color,
-    }));
-
-    menuWheel.setItems(wheelItems);
+    })));
     hideResult();
-    document.getElementById('addBtn').disabled = true;
-    document.getElementById('spinBtn').disabled = wheelItems.length === 0;
     lastWinner = null;
+    document.getElementById('addBtn').disabled = true;
+    document.getElementById('spinBtn').disabled = items.length === 0;
+
+    const n = selectedIds.size;
+    document.getElementById('selectedCount').textContent =
+        n === 0 ? 'ยังไม่ได้เลือก' : `เลือกแล้ว ${n} รายการ`;
 }
 
 // ── Spin ──────────────────────────────────────────────────────────────────────
 
 function spin() {
-    if (!menuWheel || menuWheel.isSpinning || wheelItems.length === 0) return;
+    if (!menuWheel || menuWheel.isSpinning || selectedIds.size === 0) return;
     hideResult();
-    document.getElementById('addBtn').disabled = true;
     lastWinner = null;
+    document.getElementById('addBtn').disabled = true;
 
     const btn = document.getElementById('spinBtn');
-    btn.disabled = true;
+    btn.disabled  = true;
     btn.innerHTML = '⏳ กำลังหมุน…';
     menuWheel.spin();
 }
@@ -108,7 +153,7 @@ function spin() {
 function onSpinDone(winner) {
     lastWinner = winner.item.value;
     showResult(lastWinner);
-    document.getElementById('addBtn').disabled = false;
+    document.getElementById('addBtn').disabled  = false;
     document.getElementById('spinBtn').disabled = false;
     document.getElementById('spinBtn').innerHTML = '🎯 หมุนอีกครั้ง';
 }
@@ -120,9 +165,9 @@ function showResult(item) {
     const img  = document.getElementById('resultImg');
 
     if (item.image_url) {
-        img.src = item.image_url;
+        img.src           = item.image_url;
         img.style.display = 'block';
-        img.onerror = () => { img.style.display = 'none'; };
+        img.onerror       = () => { img.style.display = 'none'; };
     } else {
         img.style.display = 'none';
     }
@@ -234,17 +279,16 @@ async function openSummary() {
     const diffEl = document.getElementById('sumDiff');
     if (data.budget) {
         const diff = data.budget - data.total;
-        diffEl.textContent = diff >= 0
+        diffEl.textContent   = diff >= 0
             ? `ประหยัดได้ ฿${diff.toLocaleString()} 🎉`
             : `เกินงบ ฿${Math.abs(diff).toLocaleString()} ⚠️`;
-        diffEl.className    = 'sum-diff ' + (diff >= 0 ? 'under' : 'over');
+        diffEl.className     = 'sum-diff ' + (diff >= 0 ? 'under' : 'over');
         diffEl.style.display = 'block';
     } else {
         diffEl.style.display = 'none';
     }
 
-    const itemsEl = document.getElementById('sumItems');
-    itemsEl.innerHTML = data.orders.length === 0
+    document.getElementById('sumItems').innerHTML = data.orders.length === 0
         ? '<p class="empty-note">ไม่มีรายการ</p>'
         : data.orders.map((o, i) => `
             <div class="sum-row">

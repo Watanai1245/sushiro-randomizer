@@ -29,129 +29,76 @@
 
   <main class="page-main menu-layout">
 
-    <!-- ── Left: Wheel + Filters ── -->
+    <!-- ── LEFT: Item Picker ── -->
+    <section class="picker-section">
+
+      <div class="picker-top">
+        <input type="search" id="searchBox" class="search-input" placeholder="🔍 ค้นหาเมนู...">
+
+        <div class="cat-tabs" id="catTabs">
+          <button class="cat-tab active" data-cat="">ทั้งหมด</button>
+          <button class="cat-tab" data-cat="Nigiri">นิกิริ 🍣</button>
+          <button class="cat-tab" data-cat="Gunkan">กุนกัง 🍙</button>
+          <button class="cat-tab" data-cat="Roll">โรล 🌀</button>
+          <button class="cat-tab" data-cat="Set">เซต 🍱</button>
+          <button class="cat-tab" data-cat="Side menu">เสริม 🍟</button>
+          <button class="cat-tab" data-cat="Dessert">หวาน 🍨</button>
+          <button class="cat-tab" data-cat="Drinks">ดื่ม 🧋</button>
+        </div>
+
+        <div class="picker-bar">
+          <span id="selectedCount" class="selected-count">ยังไม่ได้เลือก</span>
+          <div class="picker-bar-actions">
+            <button class="link-btn" onclick="selectVisible()">เลือกทั้งหมด</button>
+            <button class="link-btn red" onclick="clearSelection()">ล้าง</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="itemGrid" class="item-grid">
+        <p class="empty-note" style="padding:24px">กำลังโหลด…</p>
+      </div>
+
+    </section>
+
+    <!-- ── CENTER: Wheel ── -->
     <section class="wheel-section">
 
-      <!-- Filter panel -->
-      <div class="filter-panel">
-
-        <!-- Plate colour checkboxes -->
-        <div class="filter-group-cb">
-          <div class="filter-group-title">
-            สีจาน &amp; ราคา
-            <span class="clear-link" onclick="clearGroup('plate')">ล้าง</span>
-          </div>
-          <div class="plate-cbs">
-            {% for tier in plate_tiers %}
-            <label class="plate-opt" title="{{ tier.name }} {{ tier.label }}">
-              <input type="checkbox" class="plate-cb"
-                     data-prices="{{ tier.prices | join(',') }}"
-                     data-tier="{{ tier.id }}">
-              <span class="plate-circle"
-                    style="--c:{{ tier.color }};--t:{{ tier.text }};
-                           {% if tier.id == 'white' %}--border:2px solid #BDBDBD{% else %}--border:none{% endif %}">
-                <span class="plate-check">✓</span>
-              </span>
-              <span class="plate-info">
-                <span class="plate-price-lbl">{{ tier.label }}</span>
-                <span class="plate-name-lbl">{{ tier.name }}</span>
-              </span>
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- Category checkboxes -->
-        <div class="filter-group-cb">
-          <div class="filter-group-title">
-            หมวดหมู่
-            <span class="clear-link" onclick="clearGroup('cat')">ล้าง</span>
-          </div>
-          <div class="pill-cbs">
-            {% set cats = [
-              ('Nigiri',    'นิกิริ 🍣'),
-              ('Gunkan',    'กุนกัง 🍙'),
-              ('Roll',      'โรล 🌀'),
-              ('Set',       'เซต 🍱'),
-              ('Side menu', 'เมนูเสริม 🍟'),
-              ('Dessert',   'ของหวาน 🍨'),
-              ('Drinks',    'เครื่องดื่ม 🧋'),
-            ] %}
-            {% for val, label in cats %}
-            <label class="pill-opt">
-              <input type="checkbox" class="cat-cb" value="{{ val }}">
-              <span>{{ label }}</span>
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- Type checkboxes -->
-        <div class="filter-group-cb">
-          <div class="filter-group-title">
-            ประเภท
-            <span class="clear-link" onclick="clearGroup('type')">ล้าง</span>
-          </div>
-          <div class="pill-cbs">
-            {% set types = [
-              ('sushi',   '🍣 ซูชิ'),
-              ('side',    '🍟 เมนูเสริม'),
-              ('dessert', '🍨 ของหวาน'),
-              ('drink',   '🧋 เครื่องดื่ม'),
-            ] %}
-            {% for val, label in types %}
-            <label class="pill-opt">
-              <input type="checkbox" class="type-cb" value="{{ val }}">
-              <span>{{ label }}</span>
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-
-        <div class="filter-footer">
-          <span id="itemCount" class="item-count">กำลังโหลด…</span>
-          <button class="btn-clear-all" onclick="clearAllFilters()">ล้างทั้งหมด</button>
-        </div>
-
-      </div><!-- /filter-panel -->
-
-      <!-- Wheel -->
       <div class="wheel-wrap">
         <canvas id="menuCanvas"></canvas>
       </div>
 
+      <div class="wheel-actions">
+        <button class="btn-primary btn-spin" id="spinBtn" onclick="spin()" disabled>
+          🎰 หมุนวงล้อ
+        </button>
+        <button class="btn-secondary" onclick="quickRandom()">
+          🎲 สุ่มเลือก 10 เมนู
+        </button>
+      </div>
+
       <!-- Spin result -->
-      <div id="resultArea" class="result-card menu-result" style="display:none">
-        <img id="resultImg" src="" alt="" class="result-img">
-        <div class="result-info">
+      <div id="resultArea" class="result-card-v" style="display:none">
+        <img id="resultImg" src="" alt="" class="result-img-v">
+        <div class="result-info-v">
           <div class="result-plate">
             <span id="plateDot"  class="plate-dot"></span>
             <span id="plateName" class="plate-name-text"></span>
           </div>
-          <p class="result-name"   id="resultName">—</p>
-          <p class="result-en"     id="resultNameEn"></p>
-          <p class="result-price"  id="resultPrice">—</p>
-          <p class="result-cat"    id="resultCat"></p>
+          <p class="result-name"  id="resultName">—</p>
+          <p class="result-en"   id="resultNameEn"></p>
+          <p class="result-price" id="resultPrice">—</p>
+          <p class="result-cat"  id="resultCat"></p>
         </div>
-      </div>
-
-      <!-- Action buttons -->
-      <div class="wheel-actions">
-        <button class="btn-primary btn-spin" id="spinBtn" onclick="spin()">
-          🎰 หมุนวงล้อ
-        </button>
-        <button class="btn-secondary" onclick="randomizeWheel()">
-          🔀 สุ่มรายการใหม่
-        </button>
       </div>
 
       <button class="btn-add" id="addBtn" onclick="addItem()" disabled>
         + เพิ่มในรายการสั่ง
       </button>
 
-    </section><!-- /wheel-section -->
+    </section>
 
-    <!-- ── Right: Order list ── -->
+    <!-- ── RIGHT: Order list ── -->
     <section class="order-section">
       <div class="order-header">
         <h3>รายการที่สั่ง</h3>
@@ -189,5 +136,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/wheel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
 {% endblock %}
