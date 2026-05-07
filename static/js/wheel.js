@@ -1,13 +1,21 @@
-// Single-reel slot machine — translateY strip approach.
-// Builds REPEATS copies of all items into the DOM once; animates by sliding
-// the whole strip with transform:translateY. No per-frame DOM changes.
-// After each spin the reel teleports (invisibly) back to repeat-1 so the
-// same strip can be used for the next spin indefinitely.
+// Canvas spinning wheel.
+// Draws N coloured pie segments, each labelled with the item name.
+// Animates by rotating the canvas with ease-in-out; pointer is a fixed
+// triangle at the top. After each spin the angle is normalised so the
+// winner always rests under the pointer.
+//
+// Public API (unchanged): new SpinningWheel(id, {onComplete}), setItems(items),
+//   spin(), isSpinning
 
-const SLOT_H   = 88;    // px — must match CSS .slot-item height
-const REPEATS  = 8;     // strips built upfront; 8 × n items total
-const WIN_Y    = SLOT_H; // top of the centre (winning) slot = 88 px from window top
-const FALLBACK = '/static/images/sushiro-logo.svg';
+const FALLBACK  = '/static/images/sushiro-logo.svg'; // kept for callers that reference it
+const SEG_COLORS = [
+    '#E53935','#FB8C00','#FDD835','#43A047',
+    '#00ACC1','#1E88E5','#8E24AA','#EC407A',
+    '#FF7043','#66BB6A','#AB47BC','#29B6F6',
+];
+
+// Canvas geometry (all values in px at 360×360 resolution)
+const CX = 180, CY = 185, WHEEL_R = 154;
 
 class SpinningWheel {
     constructor(containerId, options = {}) {
@@ -15,28 +23,23 @@ class SpinningWheel {
         this.items      = [];
         this.isSpinning = false;
         this._raf       = null;
-        this._offset    = 0;   // current scroll amount (reel moves up by this many px)
+        this._angle     = 0; // cumulative clockwise rotation (radians)
 
         const el = document.getElementById(containerId);
-        el.innerHTML = `
-            <div class="slot-machine">
-                <div class="slot-window">
-                    <div class="slot-reel"></div>
-                    <div class="slot-fade-top"></div>
-                    <div class="slot-fade-bottom"></div>
-                    <div class="slot-selector"></div>
-                </div>
-            </div>`;
-        this._reel = el.querySelector('.slot-reel');
-        this._showEmpty();
+        el.innerHTML = `<div class="spin-wheel-wrap">
+            <canvas class="spin-wheel-canvas" width="360" height="360"></canvas>
+        </div>`;
+
+        this._canvas = el.querySelector('.spin-wheel-canvas');
+        this._ctx    = this._canvas.getContext('2d');
+        this._draw();
     }
 
     // ── Public ────────────────────────────────────────────────────────────────
 
     setItems(items) {
         this.items = items;
-        if (this.isSpinning) return;
-        items.length === 0 ? this._showEmpty() : this._build();
+        if (!this.isSpinning) this._draw();
     }
 
     spin() {
@@ -44,32 +47,37 @@ class SpinningWheel {
         this.isSpinning = true;
         cancelAnimationFrame(this._raf);
 
-        const n           = this.items.length;
-        const winner      = Math.floor(Math.random() * n);
-        const extraLoops  = 3 + Math.floor(Math.random() * 3); // 3–5 full rotations
+        const n          = this.items.length;
+        const winner     = Math.floor(Math.random() * n);
+        const sliceAngle = (2 * Math.PI) / n;
+        const extraSpins = 5 + Math.floor(Math.random() * 3); // 5–7 full rotations
 
-        // Target offset so winner item lands at WIN_Y in repeat (extraLoops+1)
-        // Formula: offset = (repeat * n + winnerIdx) * SLOT_H - WIN_Y
-        const targetOffset = (extraLoops + 1) * n * SLOT_H + winner * SLOT_H - WIN_Y;
-        const startOffset  = this._offset;
+        // Canonical rest angle: winner slice centred under pointer (screen top = −π/2).
+        // Slice i centre in drawing frame: −π/2 + (i+0.5)·sliceAngle
+        // After rotation r: screen_angle = centre + r = −π/2  ⟹  r = −(i+0.5)·sliceAngle (mod 2π)
+        const raw            = -(winner + 0.5) * sliceAngle;
+        const canonicalTarget = ((raw % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
 
-        const duration = 3000 + Math.random() * 700; // 3.0–3.7 s
-        const startT   = performance.now();
+        const currentMod = ((this._angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        let correction   = canonicalTarget - currentMod;
+        if (correction < 0) correction += 2 * Math.PI;
+
+        const targetAngle = this._angle + extraSpins * 2 * Math.PI + correction;
+        const startAngle  = this._angle;
+        const duration    = 3000 + Math.random() * 700; // 3.0–3.7 s
+        const startT      = performance.now();
 
         const tick = (now) => {
-            const t      = Math.min((now - startT) / duration, 1);
-            const eased  = this._ease(t);
-            const offset = startOffset + eased * (targetOffset - startOffset);
-            this._reel.style.transform = `translateY(${-offset}px)`;
+            const t     = Math.min((now - startT) / duration, 1);
+            const eased = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+            this._angle = startAngle + eased * (targetAngle - startAngle);
+            this._draw();
 
             if (t < 1) {
                 this._raf = requestAnimationFrame(tick);
             } else {
-                // Teleport to repeat-1 equivalent (same visual, resets counter for next spin)
-                const resetOffset = n * SLOT_H + winner * SLOT_H - WIN_Y;
-                this._offset = resetOffset;
-                this._reel.style.transform = `translateY(${-resetOffset}px)`;
-
+                this._angle = canonicalTarget; // normalise to [0, 2π)
+                this._draw();
                 this.isSpinning = false;
                 if (this.onComplete) this.onComplete({ item: this.items[winner], index: winner });
             }
@@ -78,68 +86,123 @@ class SpinningWheel {
         this._raf = requestAnimationFrame(tick);
     }
 
-    // ── Private: animation ────────────────────────────────────────────────────
+    // ── Private ───────────────────────────────────────────────────────────────
 
-    // Ease-in-out cubic: slow start → fast middle → slow stop
-    _ease(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
+    _draw() {
+        const ctx = this._ctx;
+        ctx.clearRect(0, 0, 360, 360);
 
-    // ── Private: DOM ──────────────────────────────────────────────────────────
+        // Shadow behind wheel
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur  = 18;
+        ctx.beginPath();
+        ctx.arc(CX, CY, WHEEL_R, 0, 2 * Math.PI);
+        ctx.fillStyle = '#1A1A2E';
+        ctx.fill();
+        ctx.restore();
 
-    _showEmpty() {
-        cancelAnimationFrame(this._raf);
-        this._reel.style.transform = '';
-        this._offset = 0;
-        this._reel.innerHTML = `
-            <div class="slot-empty">
-                <span class="slot-empty-icon">🎰</span>
-                <span class="slot-empty-text">เลือกเมนูที่ต้องการ</span>
-            </div>`;
-    }
-
-    _build() {
-        cancelAnimationFrame(this._raf);
-        const n    = this.items.length;
-        const html = [];
-        for (let rep = 0; rep < REPEATS; rep++) {
-            for (const item of this.items) html.push(this._itemHtml(item));
-        }
-        this._reel.innerHTML = html.join('');
-
-        // Start position: item 0 of repeat 1 at WIN_Y (so repeat 0 fills the slot above)
-        this._offset = n * SLOT_H - WIN_Y;
-        this._reel.style.transform = `translateY(${-this._offset}px)`;
-    }
-
-    _itemHtml(item) {
-        const isObj = item.value !== null && typeof item.value === 'object';
-
-        // Simple (budget) items: no image — show coloured tile with large amount text
-        if (!isObj) {
-            const tc = item.textColor || '#fff';
-            return `<div class="slot-item slot-item-simple" style="background:${item.color}">
-                <div class="slot-name slot-name-simple" style="color:${tc}">${item.label}</div>
-            </div>`;
+        if (this.items.length > 0) {
+            this._drawSegments();
+        } else {
+            this._drawEmptyLabel();
         }
 
-        // Menu items: thumbnail + name + price
-        const src = item.value.image_url || FALLBACK;
-        const brd = item.color === '#F0F0F0' ? 'border:1.5px solid #BDBDBD;' : '';
-        const meta = item.value.price != null
-            ? `<div class="slot-meta">
-                   <span class="plate-dot-sm" style="background:${item.color};${brd}"></span>
-                   <span class="slot-price">฿${item.value.price}</span>
-               </div>` : '';
-        return `<div class="slot-item">
-            <div class="slot-img-box">
-                <img src="${src}" class="slot-img" loading="eager" alt=""
-                     onerror="this.onerror=null;this.src='${FALLBACK}'">
-            </div>
-            <div class="slot-info">
-                <div class="slot-name">${item.label}</div>
-                ${meta}
-            </div>
-        </div>`;
+        // Outer ring (fixed)
+        ctx.beginPath();
+        ctx.arc(CX, CY, WHEEL_R, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#E53935';
+        ctx.lineWidth   = 5;
+        ctx.stroke();
+
+        // Centre cap (fixed, covers segment point)
+        ctx.beginPath();
+        ctx.arc(CX, CY, 17, 0, 2 * Math.PI);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.strokeStyle = '#E53935';
+        ctx.lineWidth   = 2.5;
+        ctx.stroke();
+
+        // Pointer triangle at top (fixed, on top of everything)
+        const tipY  = CY - WHEEL_R + 3;
+        const baseY = tipY - 22;
+        ctx.beginPath();
+        ctx.moveTo(CX - 13, baseY);
+        ctx.lineTo(CX + 13, baseY);
+        ctx.lineTo(CX, tipY);
+        ctx.closePath();
+        ctx.fillStyle   = '#E53935';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth   = 2;
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    _drawSegments() {
+        const ctx        = this._ctx;
+        const n          = this.items.length;
+        const sliceAngle = (2 * Math.PI) / n;
+
+        // All segments are drawn inside a single save/rotate block so the
+        // whole wheel rotates together.
+        ctx.save();
+        ctx.translate(CX, CY);
+        ctx.rotate(this._angle);
+
+        for (let i = 0; i < n; i++) {
+            const item   = this.items[i];
+            const startA = -Math.PI / 2 + i * sliceAngle;
+            const endA   = startA + sliceAngle;
+            const midA   = startA + sliceAngle / 2;
+            const color  = item.color || SEG_COLORS[i % SEG_COLORS.length];
+            const tc     = item.textColor || '#fff';
+
+            // Segment fill
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, WHEEL_R, startA, endA);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // Segment divider line
+            ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+            ctx.lineWidth   = 1;
+            ctx.stroke();
+
+            // Label — hide when segments are too narrow to be useful
+            if (n <= 40) {
+                const fontSize = Math.max(9, Math.min(14, Math.round(560 / n)));
+                ctx.save();
+                ctx.rotate(midA);
+                ctx.fillStyle    = tc;
+                ctx.font         = `bold ${fontSize}px Sarabun, Arial, sans-serif`;
+                ctx.textAlign    = 'right';
+                ctx.textBaseline = 'middle';
+
+                // Truncate label to fit within the arc width at 72 % radius
+                const maxW = sliceAngle * WHEEL_R * 0.72;
+                let label = item.label;
+                while (label.length > 1 && ctx.measureText(label).width > maxW) {
+                    label = label.slice(0, -1);
+                }
+                if (label.length < item.label.length) label = label.slice(0, -1) + '…';
+
+                ctx.fillText(label, WHEEL_R - 10, 0);
+                ctx.restore();
+            }
+        }
+
+        ctx.restore();
+    }
+
+    _drawEmptyLabel() {
+        const ctx = this._ctx;
+        ctx.fillStyle    = 'rgba(255,255,255,0.38)';
+        ctx.font         = 'bold 15px Sarabun, Arial, sans-serif';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('เลือกเมนูที่ต้องการ', CX, CY);
     }
 }

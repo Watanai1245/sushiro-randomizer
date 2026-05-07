@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
-import psycopg2
-import psycopg2.extras
+from werkzeug.utils import secure_filename
 import csv
 import os
 import json
@@ -8,6 +7,15 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 _TZ_THAI = timezone(timedelta(hours=7))
+
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+_USE_SQLITE  = not DATABASE_URL
+
+if _USE_SQLITE:
+    import sqlite3
+else:
+    import psycopg2
+    import psycopg2.extras
 
 def to_thai_time(ts):
     if not ts:
@@ -22,7 +30,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'sushiro-th-secret-2024')
 
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = os.environ.get('DATABASE_URL', '')
 MENU_CSV    = os.path.join(BASE_DIR, 'Menu', 'sushiro_menu.csv')
 IMAGES_DIR  = os.path.join(BASE_DIR, 'Menu', 'images')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'sushiro-admin')
@@ -54,38 +61,125 @@ PLATE_TIERS = [
 
 _menu_cache = None
 
+ALLOWED_IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'webp'}
+CSV_FIELDNAMES = ['ชื่อเมนู (TH)', 'ชื่อเมนู (EN)', 'ราคา (บาท)', 'รูปภาพ (Path)', 'หมวดหมู่']
+
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
+_SQLITE_PATH = os.path.join(BASE_DIR, 'sushiro.db')
+
+
+class _SqliteDict:
+    """Wrap sqlite3.Row list so callers can use dict() on each row."""
+    def __init__(self, cur):
+        self._cur = cur
+
+    def execute(self, sql, params=()):
+        sql = sql.replace('%s', '?')
+        # SQLite uses AUTOINCREMENT differently; strip RETURNING and fetch lastrowid
+        has_returning = 'RETURNING' in sql.upper()
+        if has_returning:
+            sql = sql[:sql.upper().rfind('RETURNING')].rstrip(' ,')
+        self._cur.execute(sql, params)
+        if has_returning:
+            self._lastrowid = self._cur.lastrowid
+        return self
+
+    def fetchone(self):
+        # Check lastrowid first — INSERT stripped of RETURNING yields no rows
+        if hasattr(self, '_lastrowid'):
+            rid = self._lastrowid
+            del self._lastrowid
+            self._cur.fetchone()  # drain the cursor
+            return (rid,)
+        row = self._cur.fetchone()
+        return row
+
+    def fetchall(self):
+        rows = self._cur.fetchall()
+        return [dict(r) for r in rows]
+
+    def close(self):
+        self._cur.close()
+
+
+class _SqliteConn:
+    def __init__(self, path):
+        self._conn = sqlite3.connect(path)
+        self._conn.row_factory = sqlite3.Row
+
+    def cursor(self, cursor_factory=None):
+        return _SqliteDict(self._conn.cursor())
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
+
 def get_db():
+    if _USE_SQLITE:
+        return _SqliteConn(_SQLITE_PATH)
     return psycopg2.connect(DATABASE_URL)
+
+
+def _dict_cursor(conn):
+    if _USE_SQLITE:
+        return conn.cursor()
+    return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
 
 def init_db():
     conn = get_db()
     cur  = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS sessions (
-            id          SERIAL PRIMARY KEY,
-            user_name   TEXT NOT NULL,
-            budget      INTEGER DEFAULT 0,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            finished_at TIMESTAMP
-        )
-    ''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS meal_orders (
-            id           SERIAL PRIMARY KEY,
-            session_id   INTEGER NOT NULL REFERENCES sessions(id),
-            item_name_th TEXT NOT NULL,
-            item_name_en TEXT,
-            price        INTEGER NOT NULL,
-            category     TEXT,
-            plate_color  TEXT,
-            plate_name   TEXT,
-            added_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+    if _USE_SQLITE:
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS sessions (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_name   TEXT NOT NULL,
+                budget      INTEGER DEFAULT 0,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                finished_at TIMESTAMP
+            )
+        ''')
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS meal_orders (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id   INTEGER NOT NULL REFERENCES sessions(id),
+                item_name_th TEXT NOT NULL,
+                item_name_en TEXT,
+                price        INTEGER NOT NULL,
+                category     TEXT,
+                plate_color  TEXT,
+                plate_name   TEXT,
+                added_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+    else:
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS sessions (
+                id          SERIAL PRIMARY KEY,
+                user_name   TEXT NOT NULL,
+                budget      INTEGER DEFAULT 0,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                finished_at TIMESTAMP
+            )
+        ''')
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS meal_orders (
+                id           SERIAL PRIMARY KEY,
+                session_id   INTEGER NOT NULL REFERENCES sessions(id),
+                item_name_th TEXT NOT NULL,
+                item_name_en TEXT,
+                price        INTEGER NOT NULL,
+                category     TEXT,
+                plate_color  TEXT,
+                plate_name   TEXT,
+                added_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
     conn.commit()
     cur.close()
     conn.close()
@@ -137,6 +231,29 @@ def get_menu():
     if _menu_cache is None:
         _menu_cache = load_menu()
     return _menu_cache
+
+
+def _load_csv_raw():
+    with open(MENU_CSV, 'r', encoding='utf-8-sig') as f:
+        return [dict(row) for row in csv.DictReader(f)]
+
+
+def _save_csv_raw(rows):
+    global _menu_cache
+    _menu_cache = None
+    with open(MENU_CSV, 'w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _save_uploaded_image(file, name_th):
+    ext = file.filename.rsplit('.', 1)[-1].lower()
+    if ext not in ALLOWED_IMAGE_EXTS:
+        return None
+    filename = name_th + '.' + ext
+    file.save(os.path.join(IMAGES_DIR, filename))
+    return f'images/{filename}'
 
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────
@@ -275,7 +392,7 @@ def api_summary():
         return jsonify({'error': 'ไม่พบ session'}), 400
 
     conn = get_db()
-    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur  = _dict_cursor(conn)
     cur.execute('SELECT * FROM sessions WHERE id = %s', (sid,))
     sess  = cur.fetchone()
     total, orders = _get_orders(conn, sid)
@@ -345,7 +462,7 @@ def admin_logout():
 def admin_dashboard():
     conn = get_db()
     sc   = conn.cursor()                                          # scalar cursor
-    dc   = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # dict cursor
+    dc   = _dict_cursor(conn)
 
     sc.execute('SELECT COUNT(*) FROM sessions'); total_sessions = sc.fetchone()[0]
     sc.execute('SELECT COUNT(*) FROM sessions WHERE finished_at IS NULL'); active = sc.fetchone()[0]
@@ -413,11 +530,105 @@ def admin_dashboard():
     )
 
 
+@app.route('/admin/menu')
+@require_admin
+def admin_menu_management():
+    return render_template('admin/menu_management.html')
+
+
+@app.route('/admin/api/menu-list')
+@require_admin
+def admin_api_menu_list():
+    rows = _load_csv_raw()
+    result = []
+    for i, row in enumerate(rows):
+        img_path = row['รูปภาพ (Path)'].strip()
+        filename = os.path.basename(img_path) if img_path else ''
+        result.append({
+            'id':        i,
+            'name_th':   row['ชื่อเมนู (TH)'].strip(),
+            'name_en':   row['ชื่อเมนู (EN)'].strip(),
+            'price':     row['ราคา (บาท)'].strip(),
+            'category':  row['หมวดหมู่'].strip(),
+            'image_url': f'/menu-image/{filename}' if filename else '',
+        })
+    return jsonify(result)
+
+
+@app.route('/admin/api/menu/add', methods=['POST'])
+@require_admin
+def admin_api_menu_add():
+    name_th  = request.form.get('name_th', '').strip()
+    name_en  = request.form.get('name_en', '').strip()
+    category = request.form.get('category', '').strip()
+    try:
+        price = int(request.form.get('price', 0))
+    except ValueError:
+        return jsonify({'error': 'ราคาไม่ถูกต้อง'}), 400
+    if not name_th:
+        return jsonify({'error': 'กรุณาใส่ชื่อเมนู (TH)'}), 400
+
+    img_path = ''
+    file = request.files.get('image')
+    if file and file.filename:
+        saved = _save_uploaded_image(file, name_th)
+        if saved is None:
+            return jsonify({'error': 'ไฟล์รูปภาพต้องเป็น jpg, jpeg, png หรือ webp'}), 400
+        img_path = saved
+
+    rows = _load_csv_raw()
+    rows.append({
+        'ชื่อเมนู (TH)': name_th,
+        'ชื่อเมนู (EN)': name_en,
+        'ราคา (บาท)':    str(price),
+        'รูปภาพ (Path)': img_path,
+        'หมวดหมู่':      category,
+    })
+    _save_csv_raw(rows)
+    return jsonify({'success': True})
+
+
+@app.route('/admin/api/menu/edit/<int:item_id>', methods=['POST'])
+@require_admin
+def admin_api_menu_edit(item_id):
+    name_th  = request.form.get('name_th', '').strip()
+    name_en  = request.form.get('name_en', '').strip()
+    category = request.form.get('category', '').strip()
+    try:
+        price = int(request.form.get('price', 0))
+    except ValueError:
+        return jsonify({'error': 'ราคาไม่ถูกต้อง'}), 400
+    if not name_th:
+        return jsonify({'error': 'กรุณาใส่ชื่อเมนู (TH)'}), 400
+
+    rows = _load_csv_raw()
+    if item_id < 0 or item_id >= len(rows):
+        return jsonify({'error': 'ไม่พบเมนู'}), 404
+
+    img_path = rows[item_id]['รูปภาพ (Path)'].strip()
+    file = request.files.get('image')
+    if file and file.filename:
+        saved = _save_uploaded_image(file, name_th)
+        if saved is None:
+            return jsonify({'error': 'ไฟล์รูปภาพต้องเป็น jpg, jpeg, png หรือ webp'}), 400
+        img_path = saved
+
+    rows[item_id] = {
+        'ชื่อเมนู (TH)': name_th,
+        'ชื่อเมนู (EN)': name_en,
+        'ราคา (บาท)':    str(price),
+        'รูปภาพ (Path)': img_path,
+        'หมวดหมู่':      category,
+    }
+    _save_csv_raw(rows)
+    return jsonify({'success': True})
+
+
 @app.route('/admin/api/session/<int:sid>')
 @require_admin
 def admin_session_detail(sid):
     conn = get_db()
-    dc   = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    dc   = _dict_cursor(conn)
     dc.execute('SELECT * FROM sessions WHERE id = %s', (sid,))
     sess = dc.fetchone()
     dc.execute('SELECT * FROM meal_orders WHERE session_id = %s ORDER BY added_at', (sid,))
@@ -441,7 +652,7 @@ def admin_session_detail(sid):
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _get_orders(conn, sid):
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur = _dict_cursor(conn)
     cur.execute('SELECT * FROM meal_orders WHERE session_id = %s ORDER BY added_at', (sid,))
     orders = [dict(r) for r in cur.fetchall()]
     cur.close()

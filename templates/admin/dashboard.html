@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sushiro Admin Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="/static/images/sushiro-logo.svg">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
@@ -21,7 +22,7 @@
 
     .sidebar {
       width: 220px;
-      background: #1A237E;
+      background: #B71C1C;
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -112,7 +113,7 @@
       cursor: pointer;
       transition: border-color 0.15s;
     }
-    .refresh-btn:hover { border-color: #3949AB; color: #3949AB; }
+    .refresh-btn:hover { border-color: #E53935; color: #E53935; }
 
     /* ── Stat cards ── */
     .stats-grid {
@@ -200,7 +201,7 @@
       width: 220px;
       transition: border-color 0.2s;
     }
-    .search-input:focus { border-color: #3949AB; }
+    .search-input:focus { border-color: #E53935; }
 
     .sessions-table {
       width: 100%;
@@ -252,6 +253,27 @@
     }
     .btn-detail:hover { background: #E0E0E0; }
 
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s, color 0.12s;
+    }
+    th.sortable:hover { background: #FFF3F0; color: #E53935; }
+    .sort-icon { font-size: 10px; margin-left: 3px; opacity: 0.3; }
+
+    .status-select {
+      padding: 8px 12px;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 10px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .status-select:focus { border-color: #E53935; }
+
     .sessions-table .user-name { font-weight: 700; }
     .sessions-table .total-cell { font-weight: 700; color: #E53935; }
 
@@ -291,7 +313,7 @@
     .modal-session-title {
       font-size: 18px; font-weight: 800;
       margin-bottom: 16px;
-      color: #1A237E;
+      color: #B71C1C;
     }
     .session-meta { margin-bottom: 16px; }
     .session-meta-row {
@@ -319,11 +341,51 @@
       color: #E53935;
     }
 
+    /* ── Mobile topbar ── */
+    .mobile-topbar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 300;
+      background: #B71C1C;
+      color: #fff;
+      padding: 12px 16px;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .mobile-topbar-title { flex: 1; font-weight: 800; font-size: 16px; }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      display: flex; flex-direction: column; gap: 5px; padding: 4px; flex-shrink: 0;
+    }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2.5px;
+      background: #fff; border-radius: 2px;
+    }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 250;
+    }
+    .sidebar-overlay.open { display: block; }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
-      .sidebar { display: none; }
+      .mobile-topbar { display: flex; }
+      .admin-wrap    { display: block; }
+      .sidebar {
+        position: fixed; left: -260px; top: 0;
+        height: 100dvh; z-index: 300;
+        transition: left 0.25s ease;
+        overflow-y: auto;
+      }
+      .sidebar.open { left: 0; }
       .main-content { padding: 16px; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-grid   { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid  { grid-template-columns: 1fr !important; }
+      .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .sessions-table { min-width: 620px; }
+      .modal-box { padding: 20px 16px; }
     }
 
     ::-webkit-scrollbar       { width: 5px; }
@@ -333,12 +395,21 @@
 </head>
 <body>
 
+<div class="mobile-topbar">
+  <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="เมนู">
+    <span></span><span></span><span></span>
+  </button>
+  <span class="mobile-topbar-title">Sushiro Admin</span>
+  <img src="/static/images/sushiro-logo.svg" alt="" style="width:28px;height:28px;object-fit:contain">
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 <div class="admin-wrap">
 
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <span class="sidebar-brand-icon">🍣</span>
+      <img src="/static/images/sushiro-logo.svg" alt="Sushiro" style="width:36px;height:36px;object-fit:contain;flex-shrink:0">
       <div>
         <div class="sidebar-brand-name">Sushiro Admin</div>
         <div class="sidebar-brand-sub">ระบบจัดการ</div>
@@ -351,6 +422,9 @@
       </a>
       <a class="nav-item" href="#sessions">
         <span class="nav-icon">👥</span> เซสชั่น
+      </a>
+      <a class="nav-item" href="/admin/menu">
+        <span class="nav-icon">🍱</span> จัดการเมนู
       </a>
       <a class="nav-item" href="/">
         <span class="nav-icon">🏠</span> หน้าหลัก
@@ -449,28 +523,44 @@
     <div class="sessions-card" id="sessions">
       <div class="table-header">
         <div class="table-title">เซสชั่นทั้งหมด ({{ sessions|length }})</div>
-        <input type="text" id="sessionSearch" class="search-input"
-               placeholder="🔍 ค้นหาชื่อผู้ใช้…"
-               oninput="filterSessions(this.value)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <select id="sessionStatus" class="status-select" onchange="applySessions()">
+            <option value="">ทุกสถานะ</option>
+            <option value="active">กำลังใช้งาน</option>
+            <option value="done">เสร็จสิ้น</option>
+          </select>
+          <input type="text" id="sessionSearch" class="search-input"
+                 placeholder="🔍 ค้นหาชื่อผู้ใช้…"
+                 oninput="applySessions()">
+        </div>
       </div>
 
       {% if sessions %}
+      <div class="table-scroll">
       <table class="sessions-table" id="sessionsTable">
         <thead>
           <tr>
-            <th>#</th>
-            <th>ชื่อ</th>
-            <th>งบประมาณ</th>
-            <th>รายการ</th>
-            <th>ยอดรวม</th>
-            <th>สถานะ</th>
-            <th>วันที่</th>
+            <th class="sortable" onclick="sortSessions('id')">#<span class="sort-icon" id="ssh-id">↓</span></th>
+            <th class="sortable" onclick="sortSessions('name')">ชื่อ<span class="sort-icon" id="ssh-name">↕</span></th>
+            <th class="sortable" onclick="sortSessions('budget')">งบประมาณ<span class="sort-icon" id="ssh-budget">↕</span></th>
+            <th class="sortable" onclick="sortSessions('orders')">รายการ<span class="sort-icon" id="ssh-orders">↕</span></th>
+            <th class="sortable" onclick="sortSessions('total')">ยอดรวม<span class="sort-icon" id="ssh-total">↕</span></th>
+            <th class="sortable" onclick="sortSessions('status')">สถานะ<span class="sort-icon" id="ssh-status">↕</span></th>
+            <th class="sortable" onclick="sortSessions('date')">วันที่<span class="sort-icon" id="ssh-date">↕</span></th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {% for s in sessions %}
-          <tr data-name="{{ s.user_name | lower }}" onclick="openSession({{ s.id }})">
+          <tr data-name="{{ s.user_name | lower }}"
+              data-id="{{ s.id }}"
+              data-budget="{{ s.budget or 0 }}"
+              data-orders="{{ s.order_count }}"
+              data-total="{{ s.total_spent }}"
+              data-status="{{ 'done' if s.finished_at else 'active' }}"
+              data-date="{{ s.created_at or '' }}"
+              onclick="openSession({{ s.id }})"
+          >
             <td style="color:#9E9E9E">{{ s.id }}</td>
             <td class="user-name">{{ s.user_name }}</td>
             <td>{{ '฿' ~ '{:,}'.format(s.budget) if s.budget else '—' }}</td>
@@ -493,6 +583,7 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
       {% else %}
       <div class="no-data" style="height:120px">ยังไม่มีเซสชั่น</div>
       {% endif %}
@@ -530,7 +621,7 @@ if (topItems.length) {
       datasets: [{
         label: 'ยอดสั่ง (ครั้ง)',
         data: topItems.map(d => d.cnt),
-        backgroundColor: topItems.map(d => d.plate_color || '#3949AB'),
+        backgroundColor: topItems.map(d => d.plate_color || '#E53935'),
         borderRadius: 6,
         borderSkipped: false,
       }]
@@ -591,12 +682,57 @@ if (byPlate.length) {
   });
 }
 
-// ── Table search ──────────────────────────────────────────────────────────────
-function filterSessions(q) {
-  const term = q.toLowerCase().trim();
-  document.querySelectorAll('#sessionsTable tbody tr').forEach(row => {
-    const name = row.dataset.name || '';
-    row.style.display = name.includes(term) ? '' : 'none';
+// ── Table filter + sort ───────────────────────────────────────────────────────
+let sSort = { key: 'id', dir: -1 };  // newest first by default
+
+function filterSessions() { applySessions(); }
+
+function applySessions() {
+  const term   = (document.getElementById('sessionSearch').value || '').toLowerCase().trim();
+  const status = document.getElementById('sessionStatus').value;
+  const rows   = Array.from(document.querySelectorAll('#sessionsTable tbody tr'));
+
+  rows.forEach(row => {
+    const nameOk   = !term   || (row.dataset.name   || '').includes(term);
+    const statusOk = !status || row.dataset.status === status;
+    row.style.display = (nameOk && statusOk) ? '' : 'none';
+  });
+
+  const visible = rows.filter(r => r.style.display !== 'none');
+  visible.sort((a, b) => {
+    let va = a.dataset[sSort.key] || '';
+    let vb = b.dataset[sSort.key] || '';
+    if (['id','budget','orders','total'].includes(sSort.key)) {
+      va = parseFloat(va) || 0;
+      vb = parseFloat(vb) || 0;
+    }
+    return (va < vb ? -1 : va > vb ? 1 : 0) * sSort.dir;
+  });
+
+  const tbody = document.querySelector('#sessionsTable tbody');
+  visible.forEach(r => tbody.appendChild(r));
+  rows.filter(r => r.style.display === 'none').forEach(r => tbody.appendChild(r));
+
+  updateSessionSortIcons();
+}
+
+function sortSessions(key) {
+  if (sSort.key === key) sSort.dir = -sSort.dir;
+  else { sSort.key = key; sSort.dir = (key === 'id') ? -1 : 1; }
+  applySessions();
+}
+
+function updateSessionSortIcons() {
+  ['id','name','budget','orders','total','status','date'].forEach(k => {
+    const el = document.getElementById('ssh-' + k);
+    if (!el) return;
+    if (sSort.key === k) {
+      el.textContent = sSort.dir === 1 ? '↑' : '↓';
+      el.style.opacity = '1';
+    } else {
+      el.textContent = '↕';
+      el.style.opacity = '0.3';
+    }
   });
 }
 
@@ -647,6 +783,13 @@ async function openSession(id) {
 
 function closeModal() {
   document.getElementById('sessionModal').style.display = 'none';
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('open');
+  document.body.style.overflow =
+    document.querySelector('.sidebar').classList.contains('open') ? 'hidden' : '';
 }
 </script>
 </body>

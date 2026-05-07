@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการเมนู · Sushiro Admin</title>
+  <link rel="icon" type="image/svg+xml" href="/static/images/sushiro-logo.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: #F0F2F5;
+      color: #1A1A2E;
+      font-size: 14px;
+    }
+
+    .admin-wrap { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar (same as dashboard) ── */
+    .sidebar {
+      width: 220px;
+      background: #B71C1C;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      flex-shrink: 0;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      margin-bottom: 20px;
+    }
+    .sidebar-brand-icon { font-size: 28px; }
+    .sidebar-brand-name { font-size: 16px; font-weight: 800; line-height: 1.2; }
+    .sidebar-brand-sub  { font-size: 11px; opacity: 0.6; }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+    .nav-icon { font-size: 16px; }
+    .sidebar-footer {
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+    .logout-btn {
+      display: block;
+      text-align: center;
+      padding: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+    /* ── Main ── */
+    .main-content { flex: 1; padding: 28px; overflow-x: hidden; }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .page-title { font-size: 24px; font-weight: 800; }
+    .page-subtitle { font-size: 13px; color: #757575; margin-top: 2px; }
+
+    .btn-primary {
+      background: #E53935;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #C62828; }
+
+    /* ── Search + filter bar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      padding: 9px 14px;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 10px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 13px;
+      outline: none;
+      width: 240px;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: #E53935; }
+
+    /* ── Menu table ── */
+    .menu-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .menu-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .menu-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: #F8F9FA;
+      color: #757575;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #EEEEEE;
+    }
+    .menu-table th:first-child { border-radius: 8px 0 0 8px; }
+    .menu-table th:last-child  { border-radius: 0 8px 8px 0; }
+    .menu-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #F5F5F5;
+      vertical-align: middle;
+    }
+    .menu-table tr:last-child td { border-bottom: none; }
+
+    .thumb-frame {
+      width: 68px;
+      height: 68px;
+      border-radius: 10px;
+      background: #F5F5F5;
+      border: 1px solid #EEEEEE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      flex-shrink: 0;
+    }
+    .thumb-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .price-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s, color 0.12s;
+    }
+    th.sortable:hover { background: #FFF3F0; color: #E53935; }
+    .sort-icon { font-size: 10px; margin-left: 3px; opacity: 0.3; }
+
+    .btn-edit {
+      background: #F5F5F5;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      color: #616161;
+      transition: background 0.15s;
+    }
+    .btn-edit:hover { background: #FFF3F0; color: #E53935; }
+
+    .no-data {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 120px;
+      color: #BDBDBD;
+      font-size: 13px;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: #F5F5F5;
+      border: none;
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .modal-close-btn:hover { background: #E0E0E0; }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #B71C1C;
+      margin-bottom: 20px;
+    }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #616161;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 10px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+    .form-control:focus { border-color: #E53935; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── Image upload zone ── */
+    .upload-zone {
+      border: 2px dashed #E0E0E0;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #E53935;
+      background: #F3F4FF;
+    }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-icon { font-size: 28px; }
+    .upload-label { font-size: 13px; color: #757575; }
+    .upload-sub   { font-size: 11px; color: #BDBDBD; }
+
+    .preview-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .preview-img {
+      max-height: 140px;
+      max-width: 100%;
+      border-radius: 10px;
+      object-fit: cover;
+      display: block;
+    }
+    .preview-clear {
+      position: absolute;
+      top: -8px; right: -8px;
+      background: #E53935;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Form footer ── */
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .btn-cancel {
+      background: #F5F5F5;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      color: #616161;
+      transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: #E0E0E0; }
+
+    .error-msg {
+      background: #FFF3F3;
+      border: 1.5px solid #FFCDD2;
+      border-radius: 10px;
+      color: #C62828;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Mobile topbar ── */
+    .mobile-topbar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 300;
+      background: #B71C1C;
+      color: #fff;
+      padding: 12px 16px;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .mobile-topbar-title { flex: 1; font-weight: 800; font-size: 16px; }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      display: flex; flex-direction: column; gap: 5px; padding: 4px; flex-shrink: 0;
+    }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2.5px;
+      background: #fff; border-radius: 2px;
+    }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 250;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .mobile-topbar { display: flex; }
+      .admin-wrap    { display: block; }
+      .sidebar {
+        position: fixed; left: -260px; top: 0;
+        height: 100dvh; z-index: 300;
+        transition: left 0.25s ease;
+        overflow-y: auto;
+      }
+      .sidebar.open { left: 0; }
+      .main-content { padding: 16px; }
+      .form-row     { grid-template-columns: 1fr; }
+      .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .menu-table   { min-width: 540px; }
+      .modal-box    { padding: 20px 16px; max-height: 95vh; }
+      .toolbar      { flex-wrap: wrap; }
+      .toolbar select, .toolbar .search-input { width: 100% !important; }
+    }
+
+    ::-webkit-scrollbar       { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #DDD; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="mobile-topbar">
+  <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="เมนู">
+    <span></span><span></span><span></span>
+  </button>
+  <span class="mobile-topbar-title">จัดการเมนู</span>
+  <img src="/static/images/sushiro-logo.svg" alt="" style="width:28px;height:28px;object-fit:contain">
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="admin-wrap">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/images/sushiro-logo.svg" alt="Sushiro" style="width:36px;height:36px;object-fit:contain;flex-shrink:0">
+      <div>
+        <div class="sidebar-brand-name">Sushiro Admin</div>
+        <div class="sidebar-brand-sub">ระบบจัดการ</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/admin/dashboard">
+        <span class="nav-icon">📊</span> ภาพรวม
+      </a>
+      <a class="nav-item" href="/admin/dashboard#sessions">
+        <span class="nav-icon">👥</span> เซสชั่น
+      </a>
+      <a class="nav-item active" href="/admin/menu">
+        <span class="nav-icon">🍱</span> จัดการเมนู
+      </a>
+      <a class="nav-item" href="/">
+        <span class="nav-icon">🏠</span> หน้าหลัก
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/admin/logout" class="logout-btn">🚪 ออกจากระบบ</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">จัดการเมนู</h1>
+        <p class="page-subtitle" id="itemCount">กำลังโหลด…</p>
+      </div>
+      <button class="btn-primary" onclick="openAdd()">+ เพิ่มเมนูใหม่</button>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="search-input"
+             placeholder="🔍 ค้นหาชื่อเมนู…"
+             oninput="renderTable()">
+      <select id="catFilter" class="form-control" style="width:auto;padding:9px 14px"
+              onchange="renderTable()">
+        <option value="">ทุกหมวดหมู่</option>
+        <option value="Nigiri">Nigiri</option>
+        <option value="Gunkan">Gunkan</option>
+        <option value="Roll">Roll</option>
+        <option value="Side menu">Side menu</option>
+        <option value="Dessert">Dessert</option>
+        <option value="Drinks">Drinks</option>
+      </select>
+    </div>
+
+    <div class="menu-card">
+      <div class="table-scroll">
+      <table class="menu-table" id="menuTable">
+        <thead>
+          <tr>
+            <th>รูป</th>
+            <th class="sortable" onclick="setSort('name_th')">ชื่อ (TH)<span class="sort-icon" id="sh-name_th">↕</span></th>
+            <th class="sortable" onclick="setSort('name_en')">ชื่อ (EN)<span class="sort-icon" id="sh-name_en">↕</span></th>
+            <th class="sortable" onclick="setSort('price')">ราคา<span class="sort-icon" id="sh-price">↕</span></th>
+            <th class="sortable" onclick="setSort('category')">หมวดหมู่<span class="sort-icon" id="sh-category">↕</span></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="menuBody">
+          <tr><td colspan="6"><div class="no-data">กำลังโหลด…</div></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Add / Edit Modal -->
+<div id="itemModal" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close-btn" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">เพิ่มเมนูใหม่</div>
+
+    <div id="modalError" class="error-msg" style="display:none"></div>
+
+    <form id="itemForm" enctype="multipart/form-data" onsubmit="submitForm(event)">
+      <input type="hidden" id="editId" value="">
+
+      <div class="form-group">
+        <label class="form-label">ชื่อเมนู (TH) *</label>
+        <input type="text" id="fNameTh" class="form-control" placeholder="ไข่หวาน" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ชื่อเมนู (EN)</label>
+        <input type="text" id="fNameEn" class="form-control" placeholder="Japanese Egg Omelet">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ราคา (บาท) *</label>
+          <select id="fPrice" class="form-control" required>
+            <option value="30">฿30 · จานขาว</option>
+            <option value="40">฿40 · จานแดง</option>
+            <option value="60">฿60 · จานเงิน</option>
+            <option value="70">฿70 · จานเงิน</option>
+            <option value="80">฿80 · จานทอง</option>
+            <option value="100">฿100 · จานดำ</option>
+            <option value="120">฿120 · พรีเมียม</option>
+            <option value="140">฿140 · พรีเมียม</option>
+            <option value="160">฿160 · พรีเมียม</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">หมวดหมู่ *</label>
+          <select id="fCategory" class="form-control" required>
+            <option value="Nigiri">Nigiri</option>
+            <option value="Gunkan">Gunkan</option>
+            <option value="Roll">Roll</option>
+            <option value="Side menu">Side menu</option>
+            <option value="Dessert">Dessert</option>
+            <option value="Drinks">Drinks</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">รูปภาพ</label>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fImage" name="image"
+                 accept="image/jpeg,image/png,image/webp"
+                 onchange="previewImage(this)">
+          <div id="uploadPrompt">
+            <div class="upload-icon">📷</div>
+            <div class="upload-label">คลิกเพื่อเลือกรูปภาพ</div>
+            <div class="upload-sub">JPG, PNG, WEBP</div>
+          </div>
+          <div id="uploadPreview" style="display:none">
+            <div class="preview-wrap">
+              <img id="previewImg" class="preview-img" src="" alt="preview">
+              <button type="button" class="preview-clear" onclick="clearImage(event)">✕</button>
+            </div>
+          </div>
+        </div>
+        <p id="currentImgNote" style="font-size:11px;color:#9E9E9E;margin-top:6px;display:none">
+          มีรูปภาพอยู่แล้ว — อัปโหลดใหม่เพื่อเปลี่ยน
+        </p>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+        <button type="submit" class="btn-primary" id="submitBtn">บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const PLATE_COLORS = {
+  30:  { color: '#F0F0F0', text: '#424242', border: '1.5px solid #BDBDBD' },
+  40:  { color: '#E53935', text: '#FFFFFF', border: 'none' },
+  60:  { color: '#9E9E9E', text: '#FFFFFF', border: 'none' },
+  70:  { color: '#9E9E9E', text: '#FFFFFF', border: 'none' },
+  80:  { color: '#FFB300', text: '#424242', border: 'none' },
+  100: { color: '#212121', text: '#FFFFFF', border: 'none' },
+  120: { color: '#5C6BC0', text: '#FFFFFF', border: 'none' },
+  140: { color: '#5C6BC0', text: '#FFFFFF', border: 'none' },
+  160: { color: '#5C6BC0', text: '#FFFFFF', border: 'none' },
+};
+
+const LOGO = '/static/images/sushiro-logo.svg';
+
+let allItems = [];
+let menuSort = { key: 'name_th', dir: 1 };
+
+async function loadItems() {
+  const res = await fetch('/admin/api/menu-list');
+  allItems  = await res.json();
+  document.getElementById('itemCount').textContent =
+    `เมนูทั้งหมด ${allItems.length} รายการ`;
+  renderTable();
+}
+
+function renderTable() {
+  const term = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const cat  = document.getElementById('catFilter').value;
+
+  let items = allItems;
+  if (term) items = items.filter(i =>
+    i.name_th.toLowerCase().includes(term) ||
+    i.name_en.toLowerCase().includes(term) ||
+    i.category.toLowerCase().includes(term));
+  if (cat) items = items.filter(i => i.category === cat);
+
+  items = [...items].sort((a, b) => {
+    let va = a[menuSort.key], vb = b[menuSort.key];
+    if (menuSort.key === 'price') { va = parseInt(va, 10); vb = parseInt(vb, 10); }
+    else { va = (va || '').toLowerCase(); vb = (vb || '').toLowerCase(); }
+    return (va < vb ? -1 : va > vb ? 1 : 0) * menuSort.dir;
+  });
+
+  const tbody = document.getElementById('menuBody');
+  if (!items.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="no-data">ไม่พบเมนู</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = items.map(item => {
+    const p   = parseInt(item.price, 10);
+    const pc  = PLATE_COLORS[p] || { color: '#5C6BC0', text: '#FFFFFF', border: 'none' };
+    const src = item.image_url || LOGO;
+    return `<tr>
+      <td>
+        <div class="thumb-frame">
+          <img src="${src}" alt="" loading="lazy"
+               onerror="this.onerror=null;this.src='${LOGO}'">
+        </div>
+      </td>
+      <td style="font-weight:600">${esc(item.name_th)}</td>
+      <td style="color:#757575">${esc(item.name_en)}</td>
+      <td>
+        <span class="price-badge"
+              style="background:${pc.color};color:${pc.text};border:${pc.border}">
+          ฿${item.price}
+        </span>
+      </td>
+      <td style="color:#616161">${esc(item.category)}</td>
+      <td>
+        <button class="btn-edit" onclick="openEdit(${item.id})">แก้ไข</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  updateMenuSortIcons();
+}
+
+function setSort(key) {
+  if (menuSort.key === key) menuSort.dir = -menuSort.dir;
+  else { menuSort.key = key; menuSort.dir = 1; }
+  renderTable();
+}
+
+function updateMenuSortIcons() {
+  ['name_th','name_en','price','category'].forEach(k => {
+    const el = document.getElementById('sh-' + k);
+    if (!el) return;
+    if (menuSort.key === k) {
+      el.textContent = menuSort.dir === 1 ? '↑' : '↓';
+      el.style.opacity = '1';
+    } else {
+      el.textContent = '↕';
+      el.style.opacity = '0.3';
+    }
+  });
+}
+
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Add ──────────────────────────────────────────────────────────────────────
+
+function openAdd() {
+  document.getElementById('modalTitle').textContent = 'เพิ่มเมนูใหม่';
+  document.getElementById('editId').value   = '';
+  document.getElementById('fNameTh').value  = '';
+  document.getElementById('fNameEn').value  = '';
+  document.getElementById('fPrice').value   = '30';
+  document.getElementById('fCategory').value = 'Nigiri';
+  document.getElementById('currentImgNote').style.display = 'none';
+  clearImage();
+  hideError();
+  document.getElementById('itemModal').style.display = 'flex';
+}
+
+// ── Edit ─────────────────────────────────────────────────────────────────────
+
+function openEdit(id) {
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+
+  document.getElementById('modalTitle').textContent = 'แก้ไขเมนู';
+  document.getElementById('editId').value    = id;
+  document.getElementById('fNameTh').value   = item.name_th;
+  document.getElementById('fNameEn').value   = item.name_en;
+  document.getElementById('fPrice').value    = item.price;
+  document.getElementById('fCategory').value = item.category;
+  clearImage();
+  hideError();
+
+  const note = document.getElementById('currentImgNote');
+  if (item.image_url) {
+    note.style.display = 'block';
+    // Show existing image as current preview
+    document.getElementById('uploadPrompt').style.display = 'none';
+    document.getElementById('uploadPreview').style.display = 'block';
+    document.getElementById('previewImg').src = item.image_url;
+    document.getElementById('uploadZone').style.pointerEvents = 'auto';
+  } else {
+    note.style.display = 'none';
+  }
+
+  document.getElementById('itemModal').style.display = 'flex';
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+
+async function submitForm(e) {
+  e.preventDefault();
+  hideError();
+
+  const editId = document.getElementById('editId').value;
+  const url    = editId !== ''
+    ? `/admin/api/menu/edit/${editId}`
+    : '/admin/api/menu/add';
+
+  const fd = new FormData();
+  fd.append('name_th',  document.getElementById('fNameTh').value.trim());
+  fd.append('name_en',  document.getElementById('fNameEn').value.trim());
+  fd.append('price',    document.getElementById('fPrice').value);
+  fd.append('category', document.getElementById('fCategory').value);
+  const fileInput = document.getElementById('fImage');
+  if (fileInput.files[0]) fd.append('image', fileInput.files[0]);
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังบันทึก…';
+
+  try {
+    const res  = await fetch(url, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) {
+      showError(data.error);
+    } else {
+      closeModal();
+      await loadItems();
+    }
+  } catch {
+    showError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'บันทึก';
+  }
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────────────────
+
+function closeModal(event) {
+  if (event && event.target !== document.getElementById('itemModal')) return;
+  document.getElementById('itemModal').style.display = 'none';
+}
+
+function showError(msg) {
+  const el = document.getElementById('modalError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('modalError').style.display = 'none';
+}
+
+// ── Image preview ─────────────────────────────────────────────────────────────
+
+function previewImage(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('uploadPrompt').style.display = 'none';
+    document.getElementById('uploadPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function clearImage(event) {
+  if (event) event.stopPropagation();
+  document.getElementById('fImage').value = '';
+  document.getElementById('previewImg').src = '';
+  document.getElementById('uploadPrompt').style.display = 'flex';
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('currentImgNote').style.display = 'none';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+loadItems();
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('open');
+  document.body.style.overflow =
+    document.querySelector('.sidebar').classList.contains('open') ? 'hidden' : '';
+}
+</script>
+</body>
+</html>
