@@ -258,12 +258,15 @@ body {
 }
 
 /* Header */
-.page-header {
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
+.sticky-top-group {
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+.page-header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
 
