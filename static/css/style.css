@@ -1046,7 +1046,6 @@ body {
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #F5F5F5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1139,7 +1138,6 @@ body {
   width: 130px;
   height: 130px;
   object-fit: contain;
-  background: #F5F5F5;
   border-radius: var(--radius);
   padding: 8px;
   display: block;
@@ -1230,7 +1228,6 @@ body {
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;

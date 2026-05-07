@@ -624,6 +624,17 @@ def admin_api_menu_edit(item_id):
     return jsonify({'success': True})
 
 
+@app.route('/admin/api/menu/delete/<int:item_id>', methods=['POST'])
+@require_admin
+def admin_api_menu_delete(item_id):
+    rows = _load_csv_raw()
+    if item_id < 0 or item_id >= len(rows):
+        return jsonify({'error': 'ไม่พบเมนู'}), 404
+    rows.pop(item_id)
+    _save_csv_raw(rows)
+    return jsonify({'success': True})
+
+
 @app.route('/admin/api/session/<int:sid>')
 @require_admin
 def admin_session_detail(sid):

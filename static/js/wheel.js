@@ -167,8 +167,8 @@ class SpinningWheel {
             ctx.fill();
 
             // Segment divider line
-            ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-            ctx.lineWidth   = 1;
+            ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+            ctx.lineWidth   = 1.5;
             ctx.stroke();
 
             // Label — hide when segments are too narrow to be useful

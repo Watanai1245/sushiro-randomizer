@@ -1,125 +1,125 @@
 ﻿ชื่อเมนู (TH),ชื่อเมนู (EN),ราคา (บาท),รูปภาพ (Path),หมวดหมู่
-ไข่หวาน,Japanese Egg Omelet,30,images/ไข่หวาน.jpg,Nigiri
+ไข่หวาน,Japanese Egg Omelet,30,images/ไข่หวาน.png,Nigiri
 ไข่หวานกับชีส,Japanese Egg Omelet w/ Cheese,30,,Nigiri
-คานิคามะ,Crab Stick,30,images/คานิคามะ.jpg,Gunkan
-คานิคามะกับหัวหอม,Crab Stick w/ Onion,30,images/คานิคามะกับหัวหอม.jpg,Gunkan
-สลัดคานิคามะ,Crab Stick Mayo Salad,30,images/สลัดคานิคามะ.jpg,Gunkan
-สลัดข้าวโพด,Corn Mayo Salad,30,images/สลัดข้าวโพด.jpg,Gunkan
-นัตโตะ,Natto Gunkan,30,images/นัตโตะ.jpg,Gunkan
-แตงกวาโรล,Cucumber Roll,30,images/แตงกวาโรล.jpg,Roll
-อินาริซูชิ,Inari,30,images/อินาริซูชิ.jpg,Roll
-มากุโระ,Tuna,40,images/มากุโระ.jpg,Nigiri
-มากุโระหมักซอสโชยุ,Tuna @w/ Soy Sauce Marinade,40,images/มากุโระหมักซอสโชยุ.jpg,Nigiri
-แซลมอนคัดพิเศษกับมะเขือเทศซอสเบซิล,Fresh Salmon @w/ Tomato Basil,40,images/แซลมอนคัดพิเศษกับมะเขือเทศซอสเบซิล.jpg,Nigiri
+คานิคามะ,Crab Stick,30,images/คานิคามะ.png,Gunkan
+คานิคามะกับหัวหอม,Crab Stick w/ Onion,30,images/คานิคามะกับหัวหอม.png,Gunkan
+สลัดคานิคามะ,Crab Stick Mayo Salad,30,images/สลัดคานิคามะ.png,Gunkan
+สลัดข้าวโพด,Corn Mayo Salad,30,images/สลัดข้าวโพด.png,Gunkan
+นัตโตะ,Natto Gunkan,30,images/นัตโตะ.png,Gunkan
+แตงกวาโรล,Cucumber Roll,30,images/แตงกวาโรล.png,Roll
+อินาริซูชิ,Inari,30,images/อินาริซูชิ.png,Roll
+มากุโระ,Tuna,40,images/มากุโระ.png,Nigiri
+มากุโระหมักซอสโชยุ,Tuna @w/ Soy Sauce Marinade,40,images/มากุโระหมักซอสโชยุ.png,Nigiri
+แซลมอนคัดพิเศษกับมะเขือเทศซอสเบซิล,Fresh Salmon @w/ Tomato Basil,40,images/แซลมอนคัดพิเศษกับมะเขือเทศซอสเบซิล.png,Nigiri
 สโมคแซลมอน,Smoked Salmon,40,,Nigiri
-ท้องแซลมอนจัมโบ้,Jumbo Salmon Belly,40,images/ท้องแซลมอนจัมโบ้.jpg,Nigiri
-ท้องแซลมอนย่าง,Broiled Salmon Belly,40,images/ท้องแซลมอนย่าง.jpg,Nigiri
-แซลมอนย่างชีส,Salmon @w/ Cheese,40,images/แซลมอนย่างชีส.jpg,Nigiri
-แซลมอนย่างชีสซอสเบซิล,Salmon @w/ Basil Cheese,40,images/แซลมอนย่างชีสซอสเบซิล.jpg,Nigiri
-ท้องแซลมอนย่างกับหัวไชเท้าขูด,Salmon Belly @w/ Radish,40,images/ท้องแซลมอนย่างกับหัวไชเท้าขูด.jpg,Nigiri
-แซลมอนคัดพิเศษย่าง,Broiled Fresh Salmon,40,images/แซลมอนคัดพิเศษย่าง.jpg,Nigiri
-ปลาซาบะย่าง,Grilled Mackerel,40,images/ปลาซาบะย่าง.jpg,Nigiri
-ปลาซาบะดองโรยงากับต้นหอม,Vinegared Mackerel @w/ Sesame & Green Onion,40,images/ปลาซาบะดองโรยงากับต้นหอม.jpg,Nigiri
-ปลาซาบะดอง,Vinegared Mackerel,40,images/ปลาซาบะดอง.jpg,Nigiri
-ปลาอาจิโรยต้นหอมกับขิง,Jack Mackerel @w/ Green Onion & Ginger,40,images/ปลาอาจิโรยต้นหอมกับขิง.jpg,Nigiri
-ปลาอิวาชิดองโรยต้นหอมกับขิง,Vinegared Sardine @w/ Green Onion & Ginger,40,images/ปลาอิวาชิดองโรยต้นหอมกับขิง.jpg,Nigiri
-ฮนมากุโระอาคามิ,Special Bluefin Tuna,40,images/ฮนมากุโระอาคามิ.jpg,Nigiri
-ปลาหมึก,Squid,40,images/ปลาหมึก.jpg,Nigiri
-ปลาหมึกกับเลมอนโรยเกลือ,Squid w/ Salt & Lemon,40,images/ปลาหมึกกับเลมอนโรยเกลือ.jpg,Nigiri
+ท้องแซลมอนจัมโบ้,Jumbo Salmon Belly,40,images/ท้องแซลมอนจัมโบ้.png,Nigiri
+ท้องแซลมอนย่าง,Broiled Salmon Belly,40,images/ท้องแซลมอนย่าง.png,Nigiri
+แซลมอนย่างชีส,Salmon @w/ Cheese,40,images/แซลมอนย่างชีส.png,Nigiri
+แซลมอนย่างชีสซอสเบซิล,Salmon @w/ Basil Cheese,40,images/แซลมอนย่างชีสซอสเบซิล.png,Nigiri
+ท้องแซลมอนย่างกับหัวไชเท้าขูด,Salmon Belly @w/ Radish,40,images/ท้องแซลมอนย่างกับหัวไชเท้าขูด.png,Nigiri
+แซลมอนคัดพิเศษย่าง,Broiled Fresh Salmon,40,images/แซลมอนคัดพิเศษย่าง.png,Nigiri
+ปลาซาบะย่าง,Grilled Mackerel,40,images/ปลาซาบะย่าง.png,Nigiri
+ปลาซาบะดองโรยงากับต้นหอม,Vinegared Mackerel @w/ Sesame & Green Onion,40,images/ปลาซาบะดองโรยงากับต้นหอม.png,Nigiri
+ปลาซาบะดอง,Vinegared Mackerel,40,images/ปลาซาบะดอง.png,Nigiri
+ปลาอาจิโรยต้นหอมกับขิง,Jack Mackerel @w/ Green Onion & Ginger,40,images/ปลาอาจิโรยต้นหอมกับขิง.png,Nigiri
+ปลาอิวาชิดองโรยต้นหอมกับขิง,Vinegared Sardine @w/ Green Onion & Ginger,40,images/ปลาอิวาชิดองโรยต้นหอมกับขิง.png,Nigiri
+ฮนมากุโระอาคามิ,Special Bluefin Tuna,40,images/ฮนมากุโระอาคามิ.png,Nigiri
+ปลาหมึก,Squid,40,images/ปลาหมึก.png,Nigiri
+ปลาหมึกกับเลมอนโรยเกลือ,Squid w/ Salt & Lemon,40,images/ปลาหมึกกับเลมอนโรยเกลือ.png,Nigiri
 ปลาหมึกยุกเกะ,Squid Yuki Poke,40,,Nigiri
-ปลาหมึกกล้วยทั้งตัว,Spear Squid,40,images/ปลาหมึกกล้วยทั้งตัว.jpg,Nigiri
-ปลาหมึกกับไข่ปลาทาราโกะ,Squid Topped w/ Cod Roe,40,images/ปลาหมึกกับไข่ปลาทาราโกะ.jpg,Nigiri
-กุ้งสด,Fresh Shrimp,40,images/กุ้งสด.jpg,Nigiri
-กุ้งหวาน,Sweet Shrimp,40,images/กุ้งหวาน.jpg,Nigiri
-กุ้งย่างชีส,Shrimp w/ Cheese,40,images/กุ้งย่างชีส.jpg,Nigiri
-กุ้งย่างชีสซอสเบซิล,Shrimp w/ Basil Cheese,40,images/กุ้งย่างชีสซอสเบซิล.jpg,Nigiri
-กุ้งอโวคาโด,Shrimp w/ Avocado,40,images/กุ้งอโวคาโด.jpg,Nigiri
+ปลาหมึกกล้วยทั้งตัว,Spear Squid,40,images/ปลาหมึกกล้วยทั้งตัว.png,Nigiri
+ปลาหมึกกับไข่ปลาทาราโกะ,Squid Topped w/ Cod Roe,40,images/ปลาหมึกกับไข่ปลาทาราโกะ.png,Nigiri
+กุ้งสด,Fresh Shrimp,40,images/กุ้งสด.png,Nigiri
+กุ้งหวาน,Sweet Shrimp,40,images/กุ้งหวาน.png,Nigiri
+กุ้งย่างชีส,Shrimp w/ Cheese,40,images/กุ้งย่างชีส.png,Nigiri
+กุ้งย่างชีสซอสเบซิล,Shrimp w/ Basil Cheese,40,images/กุ้งย่างชีสซอสเบซิล.png,Nigiri
+กุ้งอโวคาโด,Shrimp w/ Avocado,40,images/กุ้งอโวคาโด.png,Nigiri
 กุ้งทอด,Fried Shrimp,40,,Nigiri
-กุ้งแดงใหญ่,Red Shrimp,40,images/กุ้งแดงใหญ่.jpg,Nigiri
-กุ้งแดงใหญ่ย่างกับเลมอนโรยเกลือ,Broiled Red Shrimp @w/ Salt & Lemon,40,images/กุ้งแดงใหญ่ย่างกับเลมอนโรยเกลือ.jpg,Nigiri
+กุ้งแดงใหญ่,Red Shrimp,40,images/กุ้งแดงใหญ่.png,Nigiri
+กุ้งแดงใหญ่ย่างกับเลมอนโรยเกลือ,Broiled Red Shrimp @w/ Salt & Lemon,40,images/กุ้งแดงใหญ่ย่างกับเลมอนโรยเกลือ.png,Nigiri
 กุ้งแดงใหญ่กับหอมแดงทอด,Broiled Red Shrimp & Fried Shallots,40,,Nigiri
 กุ้งแดงใหญ่ยูซุโปนสึ,Red Shrimp Yuzu Ponzu,40,,Nigiri
-กุ้งแดงใหญ่กับมะเขือเทศซอสเบซิล,Red Shrimp @w/ Tomato Basil,40,images/กุ้งแดงใหญ่กับมะเขือเทศซอสเบซิล.jpg,Nigiri
-ไข่ปลาแฮร์ริ่ง,Herring Roe,40,images/ไข่ปลาแฮร์ริ่ง.jpg,Nigiri
-ไก่กรอบ,Crispy Chicken,40,images/ไก่กรอบ.jpg,Nigiri
-ไก่กรอบ ซอสสไปซี่,Crispy Chicken w/ Spicy Sauce,40,images/ไก่กรอบ ซอสสไปซี่.jpg,Nigiri
-มากุโระกับต้นหอม,Tuna w/ Green Onion,40,images/มากุโระกับต้นหอม.jpg,Gunkan
-มากุโระกับหัวไชเท้าดอง,Tuna & Pickled Radish Gunkan,40,images/มากุโระกับหัวไชเท้าดอง.jpg,Gunkan
-มากุโระยุกเกะ,Tuna Yukke,40,images/มากุโระยุกเกะ.jpg,Gunkan
-สลัดกุ้ง,Shrimp Mayo Salad,40,images/สลัดกุ้ง.jpg,Gunkan
-ไข่ปลาทาราโกะ,Cod Roe,40,images/ไข่ปลาทาราโกะ.jpg,Gunkan
-ไข่ปลาทาราโกะกับมายองเนส,Cod Roe @w/ Mayo,40,images/ไข่ปลาทาราโกะกับมายองเนส.jpg,Gunkan
-ไข่ปลาแฮร์ริ่งหมักซอส,Herring Roe Spicy,40,images/ไข่ปลาแฮร์ริ่งหมักซอส.jpg,Gunkan
-ไข่ปลาโทบิโกะ,Flyingfish Roe,40,images/ไข่ปลาโทบิโกะ.jpg,Gunkan
-มากุโระโรล,Tuna Roll,40,images/มากุโระโรล.jpg,Roll
+กุ้งแดงใหญ่กับมะเขือเทศซอสเบซิล,Red Shrimp @w/ Tomato Basil,40,images/กุ้งแดงใหญ่กับมะเขือเทศซอสเบซิล.png,Nigiri
+ไข่ปลาแฮร์ริ่ง,Herring Roe,40,images/ไข่ปลาแฮร์ริ่ง.png,Nigiri
+ไก่กรอบ,Crispy Chicken,40,images/ไก่กรอบ.png,Nigiri
+ไก่กรอบ ซอสสไปซี่,Crispy Chicken w/ Spicy Sauce,40,images/ไก่กรอบ ซอสสไปซี่.png,Nigiri
+มากุโระกับต้นหอม,Tuna w/ Green Onion,40,images/มากุโระกับต้นหอม.png,Gunkan
+มากุโระกับหัวไชเท้าดอง,Tuna & Pickled Radish Gunkan,40,images/มากุโระกับหัวไชเท้าดอง.png,Gunkan
+มากุโระยุกเกะ,Tuna Yukke,40,images/มากุโระยุกเกะ.png,Gunkan
+สลัดกุ้ง,Shrimp Mayo Salad,40,images/สลัดกุ้ง.png,Gunkan
+ไข่ปลาทาราโกะ,Cod Roe,40,images/ไข่ปลาทาราโกะ.png,Gunkan
+ไข่ปลาทาราโกะกับมายองเนส,Cod Roe @w/ Mayo,40,images/ไข่ปลาทาราโกะกับมายองเนส.png,Gunkan
+ไข่ปลาแฮร์ริ่งหมักซอส,Herring Roe Spicy,40,images/ไข่ปลาแฮร์ริ่งหมักซอส.png,Gunkan
+ไข่ปลาโทบิโกะ,Flyingfish Roe,40,images/ไข่ปลาโทบิโกะ.png,Gunkan
+มากุโระโรล,Tuna Roll,40,images/มากุโระโรล.png,Roll
 แซลมอนโรล,Salmon Roll,40,,Roll
 แซลมอนยุกเกะ,Salmon Yuki Poke,60,,Nigiri
-บินโทโระ (ท้องมากุโระบินโจ),Albacore Tuna Belly,60,images/บินโทโระ (ท้องมากุโระบินโจ).jpg,Nigiri
-แซลมอนกับหัวหอม,Salmon @w/ Onion,60,images/แซลมอนกับหัวหอม.jpg,Nigiri
-เอ็นกาวะ,Engawa,60,images/เอ็นกาวะ.jpg,Nigiri
-เอ็นกาวะย่าง,Broiled Engawa,60,images/เอ็นกาวะย่าง.jpg,Nigiri
-หอยปีกนก,Surf Clam,60,images/หอยปีกนก.jpg,Nigiri
+บินโทโระ (ท้องมากุโระบินโจ),Albacore Tuna Belly,60,images/บินโทโระ (ท้องมากุโระบินโจ).png,Nigiri
+แซลมอนกับหัวหอม,Salmon @w/ Onion,60,images/แซลมอนกับหัวหอม.png,Nigiri
+เอ็นกาวะ,Engawa,60,images/เอ็นกาวะ.png,Nigiri
+เอ็นกาวะย่าง,Broiled Engawa,60,images/เอ็นกาวะย่าง.png,Nigiri
+หอยปีกนก,Surf Clam,60,images/หอยปีกนก.png,Nigiri
 หอยปีกนกกับบาซิล,Surf Clam w/ Basil,60,,Nigiri
-หอยอาคะไก,Ark Shell,60,images/หอยอาคะไก.jpg,Nigiri
-ทาโกะ,Boiled Octopus,60,images/ทาโกะ.jpg,Nigiri
-อานาโกะ,Boiled Conger Eel,60,images/อานาโกะ.jpg,Nigiri
-อุนางิ,Grilled Eel,60,images/อุนางิ.jpg,Nigiri
-อานาโกะคัดพิเศษย่าง,Premium Grilled Conger Eel,60,images/อานาโกะคัดพิเศษย่าง.jpg,Nigiri
-หมูสามชั้นตุ๋น,Braised Pork,60,images/หมูสามชั้นตุ๋น.jpg,Nigiri
-หมูชาชูกับต้นหอมเน้นๆ,Roasted Pork @w/ Green Onion,60,images/หมูชาชูกับต้นหอมเน้นๆ.jpg,Nigiri
-กุ้งเทมปุระนิกิริ,Shrimp Tempura Gunkan,60,images/กุ้งเทมปุระนิกิริ.jpg,Gunkan
-กุ้งหวานกุนกัง,Sweet Shrimp Gunkan,60,images/กุ้งหวานกุนกัง.jpg,Gunkan
+หอยอาคะไก,Ark Shell,60,images/หอยอาคะไก.png,Nigiri
+ทาโกะ,Boiled Octopus,60,images/ทาโกะ.png,Nigiri
+อานาโกะ,Boiled Conger Eel,60,images/อานาโกะ.png,Nigiri
+อุนางิ,Grilled Eel,60,images/อุนางิ.png,Nigiri
+อานาโกะคัดพิเศษย่าง,Premium Grilled Conger Eel,60,images/อานาโกะคัดพิเศษย่าง.png,Nigiri
+หมูสามชั้นตุ๋น,Braised Pork,60,images/หมูสามชั้นตุ๋น.png,Nigiri
+หมูชาชูกับต้นหอมเน้นๆ,Roasted Pork @w/ Green Onion,60,images/หมูชาชูกับต้นหอมเน้นๆ.png,Nigiri
+กุ้งเทมปุระนิกิริ,Shrimp Tempura Gunkan,60,images/กุ้งเทมปุระนิกิริ.png,Gunkan
+กุ้งหวานกุนกัง,Sweet Shrimp Gunkan,60,images/กุ้งหวานกุนกัง.png,Gunkan
 ปูบัตเตอร์,Crab Butter,60,,Gunkan
-กุ้งทอดอโวคาโดโรล,Fried Shrimp & Avocado Roll,60,images/กุ้งทอดอโวคาโดโรล.jpg,Roll
-ชูโทโระคัดพิเศษ,Less Fatty Tuna,80,images/ชูโทโระคัดพิเศษ.jpg,Nigiri
-ปลาฮามาจิ,Young Yellowtail,80,images/ปลาฮามาจิ.jpg,Nigiri
-ปลาฮามาจิหมักงา,Young Yellowtail @w/ Sesame Marinade,80,images/ปลาฮามาจิหมักงา.jpg,Nigiri
-ปลามาไดหมักงา,Red Sea Bream @w/ Sesame Marinade,80,images/ปลามาไดหมักงา.jpg,Nigiri
+กุ้งทอดอโวคาโดโรล,Fried Shrimp & Avocado Roll,60,images/กุ้งทอดอโวคาโดโรล.png,Roll
+ชูโทโระคัดพิเศษ,Less Fatty Tuna,80,images/ชูโทโระคัดพิเศษ.png,Nigiri
+ปลาฮามาจิ,Young Yellowtail,80,images/ปลาฮามาจิ.png,Nigiri
+ปลาฮามาจิหมักงา,Young Yellowtail @w/ Sesame Marinade,80,images/ปลาฮามาจิหมักงา.png,Nigiri
+ปลามาไดหมักงา,Red Sea Bream @w/ Sesame Marinade,80,images/ปลามาไดหมักงา.png,Nigiri
 หอยซึบุไกใหญ่,Big Whelk,80,,Nigiri
 ท้องแซลมอนทั้งชิ้นกับครีมชีส,Whole Salmon Belly @w/ Cream Cheese,80,,Nigiri
-แซลมอน 3 ชนิด,Triple Salmon,80,images/แซลมอน 3 ชนิด.jpg,Set
-กุ้ง 3 ชนิด,Triple Shrimp,80,images/กุ้ง 3 ชนิด.jpg,Set
-โอโทโระคัดพิเศษ,Fatty Tuna,100,images/โอโทโระคัดพิเศษ.jpg,Nigiri
-โอโทโระคัดพิเศษย่างซอสโชยุ,Fatty Tuna @w/ Burnt Soy Sauce,100,images/โอโทโระคัดพิเศษย่างซอสโชยุ.jpg,Nigiri
-อานาโกะเนื้อนุ่มทั้งตัว,Whole Boiled Conger Eel,100,images/อานาโกะเนื้อนุ่มทั้งตัว.jpg,Nigiri
+แซลมอน 3 ชนิด,Triple Salmon,80,images/แซลมอน 3 ชนิด.png,Set
+กุ้ง 3 ชนิด,Triple Shrimp,80,images/กุ้ง 3 ชนิด.png,Set
+โอโทโระคัดพิเศษ,Fatty Tuna,100,images/โอโทโระคัดพิเศษ.png,Nigiri
+โอโทโระคัดพิเศษย่างซอสโชยุ,Fatty Tuna @w/ Burnt Soy Sauce,100,images/โอโทโระคัดพิเศษย่างซอสโชยุ.png,Nigiri
+อานาโกะเนื้อนุ่มทั้งตัว,Whole Boiled Conger Eel,100,images/อานาโกะเนื้อนุ่มทั้งตัว.png,Nigiri
 โฮตาเตะจัมโบ้,Jumbo Scallop,100,,Nigiri
-มากุโระ 3 ชนิด,Triple Tuna,100,images/มากุโระ 3 ชนิด.jpg,Set
+มากุโระ 3 ชนิด,Triple Tuna,100,images/มากุโระ 3 ชนิด.png,Set
 พรีเมียมโรล,Premium Roll,100,,Roll
-เฟรนช์ฟราย,French Fries,40,images/เฟรนช์ฟราย.jpg,Side menu
-ฟักทองเทมปุระ,Pumpkin Tempura,40,images/ฟักทองเทมปุระ.jpg,Side menu
+เฟรนช์ฟราย,French Fries,40,images/เฟรนช์ฟราย.png,Side menu
+ฟักทองเทมปุระ,Pumpkin Tempura,40,images/ฟักทองเทมปุระ.png,Side menu
 ม็อตซาเรลล่าชีสเทมปุระ,Mozzarella Cheese Tempura,80,,Side menu
-กุ้งเทมปุระทั้งตัวรสยูสุโคโช,Whole Shrimp @Yuzu Pepper Tempura,100,images/กุ้งเทมปุระทั้งตัวรสยูสุโคโช.jpg,Side menu
-ทาโกะคาราอาเกะ,Fried Octopus,120,images/ทาโกะคาราอาเกะ.jpg,Side menu
-ไก่คาราอาเกะ,Fried Chicken,120,images/ไก่คาราอาเกะ.jpg,Side menu
-เทมปุระรวม,Mixed Tempura Platter,140,images/เทมปุระรวม.jpg,Side menu
-ซุปมิโซะหอยลาย,Clam Miso Soup,60,images/ซุปมิโซะหอยลาย.jpg,Side menu
-ซุปมิโซะหอยลายกับสาหร่าย,Clam & Seaweed Miso Soup,70,images/ซุปมิโซะหอยลายกับสาหร่าย.jpg,Side menu
-ซุปมิโซะสาหร่าย,Seaweed Miso Soup,60,images/ซุปมิโซะสาหร่าย.jpg,Side menu
-อุด้งกับเต้าหู้ทอด,Kitsune Udon,100,images/อุด้งกับเต้าหู้ทอด.jpg,Side menu
-อุด้งกับกุ้งเทมปุระ,Shrimp Tempura Udon,100,images/อุด้งกับกุ้งเทมปุระ.jpg,Side menu
-ราเมงเกี๊ยวกุ้งซุปมิโซะ,Shrimp Wonton Miso Ramen,100,images/ราเมงเกี๊ยวกุ้งซุปมิโซะ.jpg,Side menu
-ราเมงซุปปลามาไดกับไก่รสเกลือ,Red Sea Bream & Chicken Ramen (Salt),100,images/ราเมงซุปปลามาไดกับไก่รสเกลือ.jpg,Side menu
-ราเมงซุปไก่รสโชยุ,Chicken Ramen (Shoyu),100,images/ราเมงซุปไก่รสโชยุ.jpg,Side menu
+กุ้งเทมปุระทั้งตัวรสยูสุโคโช,Whole Shrimp @Yuzu Pepper Tempura,100,images/กุ้งเทมปุระทั้งตัวรสยูสุโคโช.png,Side menu
+ทาโกะคาราอาเกะ,Fried Octopus,120,images/ทาโกะคาราอาเกะ.png,Side menu
+ไก่คาราอาเกะ,Fried Chicken,120,images/ไก่คาราอาเกะ.png,Side menu
+เทมปุระรวม,Mixed Tempura Platter,140,images/เทมปุระรวม.png,Side menu
+ซุปมิโซะหอยลาย,Clam Miso Soup,60,images/ซุปมิโซะหอยลาย.png,Side menu
+ซุปมิโซะหอยลายกับสาหร่าย,Clam & Seaweed Miso Soup,70,images/ซุปมิโซะหอยลายกับสาหร่าย.png,Side menu
+ซุปมิโซะสาหร่าย,Seaweed Miso Soup,60,images/ซุปมิโซะสาหร่าย.png,Side menu
+อุด้งกับเต้าหู้ทอด,Kitsune Udon,100,images/อุด้งกับเต้าหู้ทอด.png,Side menu
+อุด้งกับกุ้งเทมปุระ,Shrimp Tempura Udon,100,images/อุด้งกับกุ้งเทมปุระ.png,Side menu
+ราเมงเกี๊ยวกุ้งซุปมิโซะ,Shrimp Wonton Miso Ramen,100,images/ราเมงเกี๊ยวกุ้งซุปมิโซะ.png,Side menu
+ราเมงซุปปลามาไดกับไก่รสเกลือ,Red Sea Bream & Chicken Ramen (Salt),100,images/ราเมงซุปปลามาไดกับไก่รสเกลือ.png,Side menu
+ราเมงซุปไก่รสโชยุ,Chicken Ramen (Shoyu),100,images/ราเมงซุปไก่รสโชยุ.png,Side menu
 ชีสเค้ก,Cheesecake,70,,Side menu
 โคร็อกเก็ตข้าวโพด,Corn Croquette,80,,Side menu
 โฮมเมดชีสเค้ก,Homemade Cheesecake,100,,Side menu
-สลัดแซลมอน,Salmon Salad,100,images/สลัดแซลมอน.jpg,Side menu
-สลัดกุ้ง,Shrimp Salad,100,images/สลัดกุ้ง_2.jpg,Side menu
+สลัดแซลมอน,Salmon Salad,100,images/สลัดแซลมอน.png,Side menu
+สลัดกุ้ง,Shrimp Salad,100,images/สลัดกุ้ง_2.png,Side menu
 ซาชิมิรวม,Assorted Sashimi,160,,Side menu
-วนิลาไอศครีม,Vanilla Ice Cream,40,images/วนิลาไอศครีม.jpg,Dessert
+วนิลาไอศครีม,Vanilla Ice Cream,40,images/วนิลาไอศครีม.png,Dessert
 ฮอกไกโดไอศครีม,Hokkaido Ice Cream,40,,Dessert
 ฮอกไกโดไอศครีมกับสตรอเบอร์รี่,Hokkaido Ice Cream w/ Strawberry,40,,Dessert
-มันเชื่อมญี่ปุ่น,Candied Sweet Potato,40,images/มันเชื่อมญี่ปุ่น.jpg,Dessert
+มันเชื่อมญี่ปุ่น,Candied Sweet Potato,40,images/มันเชื่อมญี่ปุ่น.png,Dessert
 พาน่าคอตต้า,Homemade Panna Cotta,60,,Dessert
-เค้กช็อคโกแลต,Chocolate Lava Cake,60,images/เค้กช็อคโกแลต.jpg,Dessert
-วาราบิโมจิจากเกียวโต,Warabimochi,60,images/วาราบิโมจิจากเกียวโต.jpg,Dessert
+เค้กช็อคโกแลต,Chocolate Lava Cake,60,images/เค้กช็อคโกแลต.png,Dessert
+วาราบิโมจิจากเกียวโต,Warabimochi,60,images/วาราบิโมจิจากเกียวโต.png,Dessert
 วาราบิโมจิกับไอศครีมโมจิ,Warabimochi & Mochi Ice Cream,60,,Dessert
 ฮอตเค้ก,Hot Cake,60,,Dessert
-ฮอกไกโดมิลล์เครป,Mille Crepe,80,images/ฮอกไกโดมิลล์เครป.jpg,Dessert
-ฮอกไกโดมิลล์เครปเมลบา,Mille Crepe @Melba,80,images/ฮอกไกโดมิลล์เครปเมลบา.jpg,Dessert
-คาตาลาน่าไอซ์บรูเล,Catalana,80,images/คาตาลาน่าไอซ์บรูเล.jpg,Dessert
-พาร์เฟต์สตรอเบอร์รี่ชีสเค้ก,Strawberry Cheesecake Parfait,120,images/พาร์เฟต์สตรอเบอร์รี่ชีสเค้ก.jpg,Dessert
-กาแฟดำร้อน (ไม่ใส่น้ำตาล),Hot Black Coffee (No Sugar),40,images/กาแฟดำร้อน (ไม่ใส่น้ำตาล).jpg,Drinks
-กาแฟลาเต้ร้อน (ไม่ใส่น้ำตาล),Hot Café Latte (No Sugar),40,images/กาแฟลาเต้ร้อน (ไม่ใส่น้ำตาล).jpg,Drinks
-กาแฟลาเต้เย็น (ไม่ใส่น้ำตาล),Iced Café Latte (No Sugar),60,images/กาแฟลาเต้เย็น (ไม่ใส่น้ำตาล).jpg,Drinks
+ฮอกไกโดมิลล์เครป,Mille Crepe,80,images/ฮอกไกโดมิลล์เครป.png,Dessert
+ฮอกไกโดมิลล์เครปเมลบา,Mille Crepe @Melba,80,images/ฮอกไกโดมิลล์เครปเมลบา.png,Dessert
+คาตาลาน่าไอซ์บรูเล,Catalana,80,images/คาตาลาน่าไอซ์บรูเล.png,Dessert
+พาร์เฟต์สตรอเบอร์รี่ชีสเค้ก,Strawberry Cheesecake Parfait,120,images/พาร์เฟต์สตรอเบอร์รี่ชีสเค้ก.png,Dessert
+กาแฟดำร้อน (ไม่ใส่น้ำตาล),Hot Black Coffee (No Sugar),40,images/กาแฟดำร้อน (ไม่ใส่น้ำตาล).png,Drinks
+กาแฟลาเต้ร้อน (ไม่ใส่น้ำตาล),Hot Café Latte (No Sugar),40,images/กาแฟลาเต้ร้อน (ไม่ใส่น้ำตาล).png,Drinks
+กาแฟลาเต้เย็น (ไม่ใส่น้ำตาล),Iced Café Latte (No Sugar),60,images/กาแฟลาเต้เย็น (ไม่ใส่น้ำตาล).png,Drinks
 ชาช็อคโกแลต,Chocolate Tea,40,,Drinks

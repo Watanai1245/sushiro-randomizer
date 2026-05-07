@@ -22,8 +22,8 @@
 
     .sidebar {
       width: 220px;
-      background: #B71C1C;
-      color: #fff;
+      background: #e7b650;
+      color: #1A1A2E;
       display: flex;
       flex-direction: column;
       padding: 24px 16px;
@@ -38,7 +38,7 @@
       align-items: center;
       gap: 10px;
       padding-bottom: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
+      border-bottom: 1px solid rgba(0,0,0,0.12);
       margin-bottom: 20px;
     }
     .sidebar-brand-icon { font-size: 28px; }
@@ -53,7 +53,7 @@
       gap: 10px;
       padding: 10px 12px;
       border-radius: 10px;
-      color: rgba(255,255,255,0.75);
+      color: rgba(26,26,46,0.72);
       text-decoration: none;
       font-size: 14px;
       font-weight: 500;
@@ -66,27 +66,27 @@
       font-family: 'Sarabun', sans-serif;
     }
     .nav-item:hover, .nav-item.active {
-      background: rgba(255,255,255,0.12);
-      color: #fff;
+      background: rgba(0,0,0,0.1);
+      color: #1A1A2E;
     }
     .nav-icon { font-size: 16px; }
 
     .sidebar-footer {
       padding-top: 16px;
-      border-top: 1px solid rgba(255,255,255,0.15);
+      border-top: 1px solid rgba(0,0,0,0.12);
     }
     .logout-btn {
       display: block;
       text-align: center;
       padding: 10px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.06);
       border-radius: 10px;
-      color: rgba(255,255,255,0.7);
+      color: rgba(26,26,46,0.65);
       text-decoration: none;
       font-size: 13px;
       transition: background 0.15s;
     }
-    .logout-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .logout-btn:hover { background: rgba(0,0,0,0.13); color: #1A1A2E; }
 
     /* ── Main content ── */
     .main-content {
@@ -113,7 +113,7 @@
       cursor: pointer;
       transition: border-color 0.15s;
     }
-    .refresh-btn:hover { border-color: #E53935; color: #E53935; }
+    .refresh-btn:hover { border-color: #e7b650; color: #c99b3a; }
 
     /* ── Stat cards ── */
     .stats-grid {
@@ -201,7 +201,7 @@
       width: 220px;
       transition: border-color 0.2s;
     }
-    .search-input:focus { border-color: #E53935; }
+    .search-input:focus { border-color: #e7b650; }
 
     .sessions-table {
       width: 100%;
@@ -258,7 +258,7 @@
       user-select: none;
       transition: background 0.12s, color 0.12s;
     }
-    th.sortable:hover { background: #FFF3F0; color: #E53935; }
+    th.sortable:hover { background: #FFF9E6; color: #c99b3a; }
     .sort-icon { font-size: 10px; margin-left: 3px; opacity: 0.3; }
 
     .status-select {
@@ -272,10 +272,10 @@
       cursor: pointer;
       transition: border-color 0.2s;
     }
-    .status-select:focus { border-color: #E53935; }
+    .status-select:focus { border-color: #e7b650; }
 
     .sessions-table .user-name { font-weight: 700; }
-    .sessions-table .total-cell { font-weight: 700; color: #E53935; }
+    .sessions-table .total-cell { font-weight: 700; color: #c99b3a; }
 
     /* ── Modal ── */
     .modal-overlay {
@@ -313,7 +313,7 @@
     .modal-session-title {
       font-size: 18px; font-weight: 800;
       margin-bottom: 16px;
-      color: #B71C1C;
+      color: #c99b3a;
     }
     .session-meta { margin-bottom: 16px; }
     .session-meta-row {
@@ -333,12 +333,12 @@
       border-radius: 50%; flex-shrink: 0;
     }
     .item-name { flex: 1; font-weight: 500; }
-    .item-price { font-weight: 700; color: #E53935; }
+    .item-price { font-weight: 700; color: #c99b3a; }
     .modal-total {
       margin-top: 12px;
       text-align: right;
       font-size: 16px; font-weight: 800;
-      color: #E53935;
+      color: #c99b3a;
     }
 
     /* ── Mobile topbar ── */
@@ -347,12 +347,12 @@
       position: sticky;
       top: 0;
       z-index: 300;
-      background: #B71C1C;
-      color: #fff;
+      background: #e7b650;
+      color: #1A1A2E;
       padding: 12px 16px;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     }
     .mobile-topbar-title { flex: 1; font-weight: 800; font-size: 16px; }
     .hamburger-btn {
@@ -361,7 +361,7 @@
     }
     .hamburger-btn span {
       display: block; width: 22px; height: 2.5px;
-      background: #fff; border-radius: 2px;
+      background: #1A1A2E; border-radius: 2px;
     }
     .sidebar-overlay {
       display: none; position: fixed; inset: 0;
